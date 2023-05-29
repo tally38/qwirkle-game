@@ -2,6 +2,23 @@ import React from 'react';
 
 const DELIM = "-"
 
+const PlayerHand = (props) => {
+  var pieces = []
+  if (!props.hand) {
+    return "no hand"
+  }
+  var piece
+  for (let i = 0 ; i < props.hand.length ; i ++ ) {
+    piece = props.hand[i]
+    pieces.push(<div key={i}>{piece ? piece.color + piece.shape : "null"}</div>)
+  }
+  return (
+    <div>
+      {pieces}
+    </div>
+  );
+};
+
 export function QwirkleBoard({ ctx, G, moves }) {
   function onClick(i, j) {
     moves.clickCell(i, j)
@@ -48,6 +65,7 @@ export function QwirkleBoard({ ctx, G, moves }) {
       <table id="board">
         <tbody>{tbody}</tbody>
       </table>
+      <PlayerHand hand={G.players[ctx.currentPlayer].hand} />
       {winner}
     </div>
   );
