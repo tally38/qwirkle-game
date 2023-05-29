@@ -143,8 +143,8 @@ export const Qwirkle = {
   setup: setup,
   moves: {
     // placeholder move as I work through tutorial
-    clickCell: ({ G, playerID }, i, j) => {
-      G.board[i][j] = playerID;
+    placePiece: ({ G }, i, j, piece) => {
+      G.board[i][j] = piece;
     },
   },
   phases: {

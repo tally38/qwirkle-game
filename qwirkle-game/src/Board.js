@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 
 const DELIM = "-"
 
@@ -10,7 +10,7 @@ const PlayerHand = (props) => {
   var piece
   for (let i = 0 ; i < props.hand.length ; i ++ ) {
     piece = props.hand[i]
-    pieces.push(<div key={i}>{piece ? piece.color + piece.shape : "null"}</div>)
+    pieces.push(<div key={i} onClick={props.callback(piece)} >{piece ? piece.color + piece.shape : "null"}</div>)
   }
   return (
     <div>
@@ -20,8 +20,38 @@ const PlayerHand = (props) => {
 };
 
 export function QwirkleBoard({ ctx, G, moves }) {
-  function onClick(i, j) {
-    moves.clickCell(i, j)
+  const [position, setPosition] = useState(null);
+  const [piece, setPiece] = useState(null);
+
+  useEffect(() => {
+    if (position && piece) {
+      var [i, j] = position;
+      moves.placePiece(i, j, piece)
+      setPosition(null)
+      setPiece(null)
+    }
+  }, [position, piece, setPosition, setPiece]);
+  
+  function onClickBoard(i, j) {
+    if (position) {
+      let [pi, pj] = position;
+      if (pi === i && pj === j) {
+        setPosition(null)
+        return
+      }
+    }
+    setPosition([i,j])
+  }
+
+  function onClickPieceCallback(clickedPiece) {
+    function onClickPiece() {;
+      if (piece == clickedPiece) {
+        setPiece(null)
+      } else {
+        setPiece(clickedPiece)
+      }
+    }
+    return onClickPiece
   }
 
   let winner = '';
@@ -50,9 +80,9 @@ export function QwirkleBoard({ ctx, G, moves }) {
       cells.push(
         <td key={id}>
           {G.board[i][j] ? (
-            <div style={cellStyle}>{G.board[i][j]}</div>
+            <div style={cellStyle}>{G.board[i][j].color + G.board[i][j].shape}</div>
           ) : (
-            <button style={cellStyle} onClick={() => onClick(i, j)} />
+            <button style={cellStyle} onClick={() => onClickBoard(i, j)} />
           )}
         </td>
       );
@@ -65,7 +95,7 @@ export function QwirkleBoard({ ctx, G, moves }) {
       <table id="board">
         <tbody>{tbody}</tbody>
       </table>
-      <PlayerHand hand={G.players[ctx.currentPlayer].hand} />
+      <PlayerHand hand={G.players[ctx.currentPlayer].hand} callback={onClickPieceCallback} />
       {winner}
     </div>
   );
