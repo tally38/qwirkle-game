@@ -1,7 +1,5 @@
 import React, { useState, useEffect } from 'react';
 
-const DELIM = "-"
-
 const PlayerHand = (props) => {
   var pieces = []
   if (!props.hand) {
@@ -30,7 +28,7 @@ export function QwirkleBoard({ ctx, G, moves }) {
       setPosition(null)
       setPiece(null)
     }
-  }, [position, piece, setPosition, setPiece]);
+  }, [position, piece, setPosition, setPiece, moves]);
   
   function onClickBoard(i, j) {
     if (position) {
@@ -45,7 +43,7 @@ export function QwirkleBoard({ ctx, G, moves }) {
 
   function onClickPieceCallback(clickedPiece) {
     function onClickPiece() {;
-      if (piece == clickedPiece) {
+      if (piece === clickedPiece) {
         setPiece(null)
       } else {
         setPiece(clickedPiece)
@@ -76,7 +74,7 @@ export function QwirkleBoard({ ctx, G, moves }) {
   for (let i = 0; i < G.board.length ; i++) {
     let cells = [];
     for (let j = 0; j < G.board[0].length ; j++) {
-      const id = i + DELIM + j;
+      const id = i + '-' + j;
       cells.push(
         <td key={id}>
           {G.board[i][j] ? (

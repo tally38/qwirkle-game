@@ -104,8 +104,6 @@ function findOpener(G, ctx) {
 	return possibleOpeners[Math.floor(Math.random()*possibleOpeners.length)]
 }
 
-
-
 function setup({ ctx }) {
 	const colors = ["red", "orange", "yellow", "green", "blue", "purple"];
 	const shapes = ["circle", "square", "diamond", "star", "flower", "heart"];
