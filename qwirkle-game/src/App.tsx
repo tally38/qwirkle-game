@@ -5,3 +5,4 @@ import { QwirkleBoard} from './Board';
 const App = Client({ game: Qwirkle, board: QwirkleBoard });
 
 export default App
+
