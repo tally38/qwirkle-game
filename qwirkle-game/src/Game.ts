@@ -1,4 +1,4 @@
-import { Game, Ctx } from 'boardgame.io';
+import { Game, Ctx, AiEnumerate } from 'boardgame.io';
 import { INVALID_MOVE } from 'boardgame.io/core';
 
 enum TileColor {
@@ -187,12 +187,12 @@ function tilesAreCompatible(tiles: Tile[]) {
 }
 
 
-const possibleOpeningMoves = [[],[0],[1],[2],[3],[4],[5],[0,1],[0,2],[0,3],[0,4],[0,5],[1,2],[1,3],[1,4],[1,5],[2,3],[2,4],[2,5],[3,4],[3,5],[4,5],[0,1,2],[0,1,3],[0,1,4],[0,1,5],[0,2,3],[0,2,4],[0,2,5],[0,3,4],[0,3,5],[0,4,5],[1,2,3],[1,2,4],[1,2,5],[1,3,4],[1,3,5],[1,4,5],[2,3,4],[2,3,5],[2,4,5],[3,4,5],[0,1,2,3],[0,1,2,4],[0,1,2,5],[0,1,3,4],[0,1,3,5],[0,1,4,5],[0,2,3,4],[0,2,3,5],[0,2,4,5],[0,3,4,5],[1,2,3,4],[1,2,3,5],[1,2,4,5],[1,3,4,5],[2,3,4,5],[0,1,2,3,4],[0,1,2,3,5],[0,1,2,4,5],[0,1,3,4,5],[0,2,3,4,5],[1,2,3,4,5],[0,1,2,3,4,5]]
+const subsetsOfHand = [[],[0],[1],[2],[3],[4],[5],[0,1],[0,2],[0,3],[0,4],[0,5],[1,2],[1,3],[1,4],[1,5],[2,3],[2,4],[2,5],[3,4],[3,5],[4,5],[0,1,2],[0,1,3],[0,1,4],[0,1,5],[0,2,3],[0,2,4],[0,2,5],[0,3,4],[0,3,5],[0,4,5],[1,2,3],[1,2,4],[1,2,5],[1,3,4],[1,3,5],[1,4,5],[2,3,4],[2,3,5],[2,4,5],[3,4,5],[0,1,2,3],[0,1,2,4],[0,1,2,5],[0,1,3,4],[0,1,3,5],[0,1,4,5],[0,2,3,4],[0,2,3,5],[0,2,4,5],[0,3,4,5],[1,2,3,4],[1,2,3,5],[1,2,4,5],[1,3,4,5],[2,3,4,5],[0,1,2,3,4],[0,1,2,3,5],[0,1,2,4,5],[0,1,3,4,5],[0,2,3,4,5],[1,2,3,4,5],[0,1,2,3,4,5]]
 
 function findBiggestOpeningMove(hand: Tile[]) : number {
 	// assumes all pieces in hand are not null
 	var biggestMoveLength = 0
-	possibleOpeningMoves.forEach(move => {
+	subsetsOfHand.forEach(move => {
 		var selectedTiles = move.map(i => hand[i])
 		if (tilesAreCompatible(selectedTiles)) {
 			if (move.length > biggestMoveLength) {
@@ -285,6 +285,33 @@ function removeTileFromHand(G: QwirkleState, playerID: string, tile: Tile) {
   }
 }
 
+function validTilePlacement(G: QwirkleState, playerID: String, pos: Position, tile: Tile) {
+  const isStartPosition = pos.i === Math.floor(G.cells.length/2) && pos.j === Math.floor(G.cells[0].length/2)
+  var rowTiles = findRowTiles(G, pos)
+  var colTiles = findColumnTiles(G, pos)
+  var isTouchingAnotherTile = rowTiles.length > 0 || colTiles.length > 0
+
+  if (G.cells[pos.i][pos.j]) {
+    return false
+  }
+  if (isTouchingAnotherTile) {
+    rowTiles.push(tile)
+    if (!tilesAreCompatible(rowTiles)) {
+      return false
+    }
+    colTiles.push(tile)
+    if (!tilesAreCompatible(colTiles)) {
+      return false
+    }
+  } else if (!isStartPosition) {
+    return false
+  }
+  if (G.turnPositions.length && !areLocationsContinuous(G, G.turnPositions[0], pos)) {
+    return false
+  }
+  return true
+}
+
 function updateScore(G: QwirkleState, playerID: string) {
   var turnScore = 0
   var pointArray : number[] = []
@@ -370,23 +397,7 @@ export const Qwirkle : Game<QwirkleState>= {
       if (G.cells[pos.i][pos.j] || G.players[playerID].tilesToSwap.length ) {
         return INVALID_MOVE
       }
-      const isStartPosition = pos.i === Math.floor(G.cells.length/2) && pos.j === Math.floor(G.cells[0].length/2)
-      var rowTiles = findRowTiles(G, pos)
-      var colTiles = findColumnTiles(G, pos)
-      var isTouchingAnotherTile = rowTiles.length > 0 || colTiles.length > 0
-      if (isTouchingAnotherTile) {
-        rowTiles.push(tile)
-        if (!tilesAreCompatible(rowTiles)) {
-          return INVALID_MOVE
-        }
-        colTiles.push(tile)
-        if (!tilesAreCompatible(colTiles)) {
-          return INVALID_MOVE
-        }
-      } else if (!isStartPosition) {
-        return INVALID_MOVE
-      }
-      if (G.turnPositions.length && !areLocationsContinuous(G, G.turnPositions[0], pos)) {
+      if (!validTilePlacement(G, playerID, pos, tile)) {
         return INVALID_MOVE
       }
       G.turnPositions.push(pos)
@@ -441,6 +452,34 @@ export const Qwirkle : Game<QwirkleState>= {
       G.turnPositions = []
       return fillAllHands(G)
     },
-  }
+  },
+  ai: {
+    enumerate: (G, _, playerID) => {
+      let moves : AiEnumerate = [];
+      moves.push({'event': 'endTurn'})
+      if (!G.players[playerID].tilesToSwap.length) {
+        for (let i = 0; i < G.cells.length ; i++) {
+          for (let j = 0; j < G.cells[0].length ; j++) {
+            G.players[playerID].hand.forEach(tile => {
+              if (tile) {
+                var pos = {i, j}
+                if (validTilePlacement(G, playerID, pos, tile)) {
+                  moves.push({ move: 'placeTile', args: [pos, tile] });
+                }
+              }
+            })
+          }
+        }
+      }
+      if (!G.turnPositions.length) {
+        G.players[playerID].hand.forEach(tile => {
+          if (tile) {
+            moves.push({ move: 'selectTileToSwap', args: [tile] });
+          }
+        })
+      }      
+      return moves;
+    },
+  },
 };
 // TODO: detect when there are no valid turns end game
