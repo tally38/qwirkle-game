@@ -1,5 +1,5 @@
 import { Game, Ctx } from 'boardgame.io';
-// import { INVALID_MOVE } from 'boardgame.io/core';
+import { INVALID_MOVE } from 'boardgame.io/core';
 
 enum TileColor {
   red = "red",
@@ -27,6 +27,11 @@ export type IPlayerHand = (null | Tile)[]
 
 export interface Player {
   hand: IPlayerHand
+}
+
+export interface Position {
+  i: number,
+  j: number
 }
 
 export interface QwirkleState {
@@ -88,6 +93,7 @@ function fillAllHands(G: QwirkleState) {
 	for (let playerId in G.players) {
 		fillHand(G, playerId)
 	}
+  return G
 }
 
 function tilesAreCompatible(tiles: Tile[]) {
@@ -152,6 +158,58 @@ function findOpener(G: QwirkleState, ctx: Ctx ) {
 	return possibleOpeners[Math.floor(Math.random()*possibleOpeners.length)]
 }
 
+function findColumnTiles(G: QwirkleState, pos: Position) : Tile[] {
+  var colTiles : Tile[] = []
+  const m = G.cells.length
+  var i = pos.i + 1
+  while (i < m && G.cells[i][pos.j]) {
+    colTiles.push(G.cells[i][pos.j]!)
+    i++
+  }
+  i = pos.i - 1
+  while (i >= 0 && G.cells[i][pos.j]) {
+    colTiles.push(G.cells[i][pos.j]!)
+    i--
+  }
+  return colTiles
+}
+
+function findRowTiles(G: QwirkleState, pos: Position) : Tile[] {
+  var rowTiles : Tile[] = []
+  const n = G.cells[0].length
+  var j = pos.j + 1
+  while (j < n && G.cells[pos.i][j]) {
+    rowTiles.push(G.cells[pos.i][j]!)
+    j++
+  }
+  j = pos.j - 1
+  while (j >= 0 && G.cells[pos.i][j]) {
+    rowTiles.push(G.cells[pos.i][j]!)
+    j--
+  }
+  return rowTiles
+}
+
+function removeTileFromHand(G: QwirkleState, playerID: string, tile: Tile) {
+  var hand = G.players[playerID]?.hand
+  if (!hand) {
+    throw new Error("Invalid playerId passed to removeTileFromHand")
+  }
+  var handTile : Tile | null
+  var removeIndex : null | number = null
+  for (let i = 0 ; i < hand.length ; i++ ) {
+    handTile = hand[i]
+    if (handTile && handTile.color === tile.color && handTile.shape === tile.shape ) {
+      removeIndex = i
+    }
+  }
+  if ( removeIndex !== null ) {
+    hand[removeIndex] = null
+  } else {
+    throw new Error("Tile not found in player's hand")
+  }
+}
+
 export const Qwirkle : Game<QwirkleState>= {
   setup: ({ ctx }) : QwirkleState => {
     const colors = ["red", "orange", "yellow", "green", "blue", "purple"];
@@ -191,23 +249,43 @@ export const Qwirkle : Game<QwirkleState>= {
   },
   moves: {
     // placeholder move as I work through tutorial
-    placeTile: ({ G }, i, j, piece) => {
-      G.cells[i][j] = piece;
+    placeTile: ({ G, playerID }, pos: Position, tile: Tile) => {
+      if (G.cells[pos.i][pos.j]) {
+        return INVALID_MOVE
+      }
+      const isStartPosition = pos.i === 5 && pos.j === 5
+      var rowTiles = findRowTiles(G, pos)
+      var colTiles = findColumnTiles(G, pos)
+      var isTouchingAnotherTile = rowTiles.length > 0 || colTiles.length > 0
+      if (isTouchingAnotherTile) {
+        rowTiles.push(tile)
+        if (!tilesAreCompatible(rowTiles)) {
+          return INVALID_MOVE
+        }
+        colTiles.push(tile)
+        if (!tilesAreCompatible(colTiles)) {
+          return INVALID_MOVE
+        }
+      } else if (!isStartPosition) {
+        return INVALID_MOVE
+      }
+
+      G.cells[pos.i][pos.j] = tile
+      removeTileFromHand(G, playerID, tile)
     },
   },
   phases: {
 	game: {
 	  start: true,
-	  onBegin: ({ G }) => {
-		fillAllHands(G)
-	  },
+	  onBegin: ({ G }) => fillAllHands(G),
 	},
   },
   turn: {
-	order: {
-	  first: ({ G, ctx }) => findOpener(G, ctx),
-	  next: ({ ctx }) => (ctx.playOrderPos + 1) % ctx.numPlayers,
-	  playOrder: ({ ctx }) => [...Array(ctx.numPlayers).keys()].map(k => String(k)),
-	}
+    order: {
+      first: ({ G, ctx }) => findOpener(G, ctx),
+      next: ({ ctx }) => (ctx.playOrderPos + 1) % ctx.numPlayers,
+      playOrder: ({ ctx }) => [...Array(ctx.numPlayers).keys()].map(k => String(k)),
+    },
+    onEnd: ({ G }) => fillAllHands(G),
   }
 };
