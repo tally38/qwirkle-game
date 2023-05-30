@@ -107,6 +107,32 @@ function areLocationsContinuous(G: QwirkleState, pos1: Position, pos2: Position)
   return false;
 }
 
+function extendBoardIfNeeded(G: QwirkleState, pos: Position) {
+  // extends the board if the position is on the edge of the board
+  // update all active turnPositions to be consistent with the new board
+  if ( pos.i === 0 ) {
+    G.cells.unshift(Array(G.cells[0].length).fill(null))
+    G.turnPositions.forEach(pos => {
+      pos.i++
+    })
+  } else if ( pos.i === G.cells.length - 1 ) {
+    G.cells.push(Array(G.cells[0].length).fill(null))
+  }
+  if ( pos.j === 0 ) {
+    for (let i = 0 ; i < G.cells.length ; i++) {
+      G.cells[i].unshift(null)
+    }
+    G.turnPositions.forEach(pos => {
+      pos.j++
+    })
+  } else if ( pos.j === G.cells[0].length - 1) {
+    for (let i = 0 ; i < G.cells.length ; i++) {
+      G.cells[i].push(null)
+    }
+  }
+
+}
+
 function drawTile(G: QwirkleState) {
 	var tile = G.secret.bag[G.bagIndex]
 	G.secret.bag[G.bagIndex] = null
@@ -281,7 +307,6 @@ function updateScore(G: QwirkleState, playerID: string) {
   }
 
   pointArray.forEach(p => {
-    console.log(p)
     if (p === 6) {
       turnScore += 12
     } else if ( p > 1 ) {
@@ -338,8 +363,8 @@ export const Qwirkle : Game<QwirkleState>= {
       }
       scores[String(i)] = 0
     }
-  
-    var cells = Array(11).fill(Array(11).fill(null))
+    var initialBoardSize = 3
+    var cells = Array(initialBoardSize).fill(Array(initialBoardSize).fill(null))
 
     var G : QwirkleState = {secret: {bag}, bagIndex, players, cells, scores, turnPositions: []}
     fillAllHands(G)
@@ -351,7 +376,7 @@ export const Qwirkle : Game<QwirkleState>= {
       if (G.cells[pos.i][pos.j] || G.players[playerID].tilesToSwap.length ) {
         return INVALID_MOVE
       }
-      const isStartPosition = pos.i === 5 && pos.j === 5
+      const isStartPosition = pos.i === Math.floor(G.cells.length/2) && pos.j === Math.floor(G.cells[0].length/2)
       var rowTiles = findRowTiles(G, pos)
       var colTiles = findColumnTiles(G, pos)
       var isTouchingAnotherTile = rowTiles.length > 0 || colTiles.length > 0
@@ -373,7 +398,7 @@ export const Qwirkle : Game<QwirkleState>= {
       G.turnPositions.push(pos)
       G.cells[pos.i][pos.j] = tile
       removeTileFromHand(G, playerID, tile)
-      // TODO: handle expanding grid as needed
+      extendBoardIfNeeded(G, pos) // this needs to be calld after pushing pos on turnPositions; TODO: move to on end move
     },
     selectTileToSwap: ({ G, playerID }, tile: Tile) => {
       // Only allow swapping pieces if no tiles placed on this turn
