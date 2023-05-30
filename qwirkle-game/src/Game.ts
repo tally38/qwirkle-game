@@ -27,6 +27,7 @@ export type IPlayerHand = (null | Tile)[]
 
 export interface Player {
   hand: IPlayerHand
+  tilesToSwap: Tile[]
 }
 
 export interface Position {
@@ -113,21 +114,21 @@ function drawTile(G: QwirkleState) {
 	return tile
 }
 
-function fillHand(G: QwirkleState, playerId: string) {
-  if (!G.players[playerId]) {
-    throw new Error("Invalid playerId passed to fillHand" + playerId)
+function fillHand(G: QwirkleState, playerID: string) {
+  if (!G.players[playerID]) {
+    throw new Error("Invalid playerID passed to fillHand" + playerID)
   }
-	var playerHand = G.players[playerId].hand
+	var playerHand = G.players[playerID].hand
 	for (var i = 0 ; i < playerHand.length ; i++ ) {
-		if ( playerHand[i] === null && G.bagIndex > 0 ) {
+		if ( playerHand[i] === null && G.bagIndex >= 0 ) {
 			playerHand[i] = drawTile(G)
 		}
 	}
 }
 
 function fillAllHands(G: QwirkleState) {
-	for (let playerId in G.players) {
-		fillHand(G, playerId)
+	for (let playerID in G.players) {
+		fillHand(G, playerID)
 	}
   return G
 }
@@ -241,7 +242,7 @@ function findRowTiles(G: QwirkleState, pos: Position) : Tile[] {
 function removeTileFromHand(G: QwirkleState, playerID: string, tile: Tile) {
   var hand = G.players[playerID]?.hand
   if (!hand) {
-    throw new Error("Invalid playerId passed to removeTileFromHand")
+    throw new Error("Invalid playerID passed to removeTileFromHand")
   }
   var handTile : Tile | null
   var removeIndex : null | number = null
@@ -258,7 +259,7 @@ function removeTileFromHand(G: QwirkleState, playerID: string, tile: Tile) {
   }
 }
 
-function updateScore(G: QwirkleState, playerId: string) {
+function updateScore(G: QwirkleState, playerID: string) {
   var turnScore = 0
   var pointArray : number[] = []
   var tilesInRow = G.turnPositions.every( (val, _, arr) => val.i === arr[0].i )
@@ -287,7 +288,20 @@ function updateScore(G: QwirkleState, playerId: string) {
       turnScore += p
     }
   })
-  G.scores[playerId] += turnScore
+  G.scores[playerID] += turnScore
+}
+
+function swapSelectedTiles(G: QwirkleState, playerID: string) {
+  // Only allow swapping pieces if no tiles placed on this turn
+  var tile
+  for (let i = 0 ; i < G.players[playerID].tilesToSwap.length ; i++ ) {
+    tile = G.players[playerID].tilesToSwap[i]
+    G.bagIndex++
+    G.secret.bag[G.bagIndex] = tile
+  }
+  shuffle(G.secret.bag, G.bagIndex)
+  fillHand(G, playerID)
+  G.players[playerID].tilesToSwap = []
 }
 
 export const Qwirkle : Game<QwirkleState>= {
@@ -320,6 +334,7 @@ export const Qwirkle : Game<QwirkleState>= {
     for (i = 0 ; i < ctx.numPlayers ; i++) {
       players[String(i)] = {
         hand: Array(6).fill(null),
+        tilesToSwap: []
       }
       scores[String(i)] = 0
     }
@@ -333,7 +348,7 @@ export const Qwirkle : Game<QwirkleState>= {
   moves: {
     // placeholder move as I work through tutorial
     placeTile: ({ G, playerID }, pos: Position, tile: Tile) => {
-      if (G.cells[pos.i][pos.j]) {
+      if (G.cells[pos.i][pos.j] || G.players[playerID].tilesToSwap.length ) {
         return INVALID_MOVE
       }
       const isStartPosition = pos.i === 5 && pos.j === 5
@@ -360,19 +375,27 @@ export const Qwirkle : Game<QwirkleState>= {
       removeTileFromHand(G, playerID, tile)
       // TODO: handle expanding grid as needed
     },
+    selectTileToSwap: ({ G, playerID }, tile: Tile) => {
+      // Only allow swapping pieces if no tiles placed on this turn
+      if (G.turnPositions.length || G.bagIndex < 0 ) {
+        return INVALID_MOVE
+      }
+      removeTileFromHand(G, playerID, tile)
+      G.players[playerID].tilesToSwap.push(tile)
+    },
   },
   endIf: ({ G }) => {
     // TODO: handle ties
     var hand
-    for (let playerId in G.players) {
-      hand = G.players[playerId].hand
-      if (hand.every( (val) => val === null ) && G.bagIndex === 0 && !G.turnPositions.length) {
+    for (let playerID in G.players) {
+      hand = G.players[playerID].hand
+      if (hand.every( (val) => val === null ) && G.bagIndex === -1 && !G.turnPositions.length) {
         var winner = null
         var maxScore = 0
-        for (let playerId in G.scores) {
-          if (G.scores[playerId] > maxScore) {
-            maxScore = G.scores[playerId]
-            winner = playerId
+        for (let playerID in G.scores) {
+          if (G.scores[playerID] > maxScore) {
+            maxScore = G.scores[playerID]
+            winner = playerID
           }
         }
         return { winner }
@@ -386,7 +409,11 @@ export const Qwirkle : Game<QwirkleState>= {
       playOrder: ({ ctx }) => [...Array(ctx.numPlayers).keys()].map(k => String(k)),
     },
     onEnd: ({ G, ctx }) => {
+      if (G.players[ctx.currentPlayer].tilesToSwap.length && G.turnPositions.length) {
+        throw new Error("Player swapped and placed tiles within same turn.")
+      }
       updateScore(G, ctx.currentPlayer)
+      swapSelectedTiles(G, ctx.currentPlayer)
       if (G.players[ctx.currentPlayer].hand.every((val) => val === null)) {
         G.scores[ctx.currentPlayer] += 6
       }
@@ -395,3 +422,4 @@ export const Qwirkle : Game<QwirkleState>= {
     },
   }
 };
+// TODO: detect when there are no valid turns end game

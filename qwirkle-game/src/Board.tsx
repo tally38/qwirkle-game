@@ -5,6 +5,7 @@ import { QwirkleState, IPlayerHand, Tile, Position } from './Game';
 interface PlayerHandProps {
     hand: IPlayerHand
     callback: (tile: Tile) => VoidFunction
+    tilesToSwap: Tile[]
 }
 
 interface ScoreDisplayProps {
@@ -15,8 +16,15 @@ interface ScoreDisplayProps {
 
 interface QwirkleProps extends BoardProps<QwirkleState> {}
 
+const cellStyle = {
+  border: '1px solid #555',
+  width: '50px',
+  height: '50px',
+  lineHeight: '25px',
+  textAlign: 'center' as 'center',
+};
+
 const ScoreDisplay = (props: ScoreDisplayProps) => {
-  
   const scoreDisplays = []
   for (let playerId in props.scores) {
 		scoreDisplays.push(
@@ -33,23 +41,32 @@ const ScoreDisplay = (props: ScoreDisplayProps) => {
 }
 
 const PlayerHand = (props: PlayerHandProps) => {
-  var tiles = []
-  if (!props.hand) {
-    return (<div>"no hand"</div>)
-  }
+  var hand = []
+  var tilesToSwap = []
   var tile
   for (let i = 0 ; i < props.hand.length ; i ++ ) {
     tile = props.hand[i]
     if (tile) {
-      tiles.push(<div key={i} onClick={props.callback(tile)} >{tile.color + " " + tile.shape}</div>)
+      hand.push(<td key={i} style={cellStyle} onClick={props.callback(tile)} >{tile.color + " " + tile.shape}</td>)
     } else {
-      tiles.push(<div key={i} >empty</div>)
+      hand.push(<td key={i} style={cellStyle} />)
     }
   }
+  for (let i = 0 ; i < props.tilesToSwap.length ; i ++ ) {
+    tile = props.tilesToSwap[i]
+    tilesToSwap.push(<td key={i} style={cellStyle} onClick={props.callback(tile)} >{tile.color + " " + tile.shape}</td>)
+  }
   return (
-    <div>
-      {tiles}
-    </div>
+    <>
+      <tr key="player-hand">
+        <td key={'player-hand'}><b>Player Hand</b></td>
+        {hand}
+      </tr>
+      <tr key="player-tiles-to-swap" style={{height: '50px'}}>
+        <td key={'tiles-to-swap'}><b>Tiles to Swap</b></td>
+        {tilesToSwap}
+      </tr>
+    </>
   );
 };
 
@@ -67,6 +84,13 @@ export function QwirkleBoard({ ctx, G, moves, undo, events } : QwirkleProps) {
     }
   }, [position, tile, setPosition, setTile, moves]);
   
+  function onClickSwap() {
+    if (tile) {
+      moves.selectTileToSwap(tile)
+      setTile(null)
+    }
+  }
+
   function onClickBoard(boardPosition : Position) {
     setPosition(boardPosition)
   }
@@ -87,14 +111,6 @@ export function QwirkleBoard({ ctx, G, moves, undo, events } : QwirkleProps) {
         <div id="winner">Draw!</div>
       );
   }
-
-  const cellStyle = {
-    border: '1px solid #555',
-    width: '50px',
-    height: '50px',
-    lineHeight: '25px',
-    textAlign: 'center' as 'center',
-  };
 
   let tbody = [];
   var cellTile 
@@ -118,16 +134,33 @@ export function QwirkleBoard({ ctx, G, moves, undo, events } : QwirkleProps) {
 
   var endTurn = events.endTurn ? events.endTurn : (() => {return});
 
+  var {hand, tilesToSwap} = G.players[ctx.currentPlayer]!
   return (
     <div>
       <ScoreDisplay scores={G.scores} />
+      {winner}
       <table id="board">
         <tbody>{tbody}</tbody>
       </table>
-      <PlayerHand hand={G.players[ctx.currentPlayer]!.hand} callback={onClickTileCallback} />
-      <button style={cellStyle} onClick={ () => undo() }> undo </button>
-      <button style={cellStyle} onClick={() => endTurn()}>end turn</button>
-      {winner}
+      <table id="player-dashboard">
+        <tbody>
+          <PlayerHand hand={hand} tilesToSwap={tilesToSwap} callback={onClickTileCallback} />
+          <tr>
+            <td key="action-header">
+              <b>Actions</b>
+            </td>
+            <td key="undo">
+              <button style={cellStyle} onClick={ () => undo() }> undo </button>
+            </td>
+            <td key="end-turn">
+              <button style={cellStyle} onClick={() => endTurn()}>end turn</button>
+            </td>
+            <td key="swap">
+              <button style={cellStyle} onClick={() => onClickSwap()}>swap</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
     </div>
   );
 }
