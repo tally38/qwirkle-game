@@ -72,10 +72,10 @@ function shuffle(array: any[], lastIndex: number) {
 }
 
 function drawTile(G: QwirkleState) {
-	var piece = G.secret.bag[G.bagIndex]
+	var tile = G.secret.bag[G.bagIndex]
 	G.secret.bag[G.bagIndex] = null
 	G.bagIndex--
-	return piece
+	return tile
 }
 
 function fillHand(G: QwirkleState, playerId: string) {
@@ -84,7 +84,7 @@ function fillHand(G: QwirkleState, playerId: string) {
   }
 	var playerHand = G.players[playerId].hand
 	for (var i = 0 ; i < playerHand.length ; i++ ) {
-		if ( playerHand[i] == null ) {
+		if ( playerHand[i] === null && G.bagIndex > 0 ) {
 			playerHand[i] = drawTile(G)
 		}
 	}
@@ -244,7 +244,6 @@ function updateScore(G: QwirkleState, playerId: string) {
     pointArray.push(findColumnTiles(G, firstPos).length)
   }
 
-  console.log(pointArray)
   pointArray.forEach(p => {
     console.log(p)
     if (p === 6) {
@@ -262,19 +261,20 @@ export const Qwirkle : Game<QwirkleState>= {
     const shapes = ["circle", "square", "diamond", "star", "flower", "heart"];
   
     var bag = Array(108)
-      var bagIndex = 107
-    for (var i = 0; i < colors.length; i++) {
-      for (var j = 0; j < shapes.length; j++) {
-        for (var k = 0; k < 3; k++) {
+    var bagIndex = 12
+    for (var k = 0; k < 3; k++) {
+      for (var i = 0; i < colors.length; i++) {
+        for (var j = 0; j < shapes.length; j++) {
           var piece = {
             color: colors[i],
             shape: shapes[j]
           };
-          bag[18*i + 3*j + k] = piece;
+          bag[36*k + 6*i + j] = piece;
         }
       }
     }
     shuffle(bag, bagIndex)
+
   
     var players : {
       [key: string]: Player
@@ -290,8 +290,10 @@ export const Qwirkle : Game<QwirkleState>= {
     }
   
     var cells = Array(11).fill(Array(11).fill(null))
-  
-    return {secret: {bag}, bagIndex, players, cells, scores, turnPositions: []}
+
+    var G : QwirkleState = {secret: {bag}, bagIndex, players, cells, scores, turnPositions: []}
+    fillAllHands(G)
+    return G
   },
   moves: {
     // placeholder move as I work through tutorial
@@ -320,11 +322,22 @@ export const Qwirkle : Game<QwirkleState>= {
       removeTileFromHand(G, playerID, tile)
     },
   },
-  phases: {
-	game: {
-	  start: true,
-	  onBegin: ({ G }) => fillAllHands(G),
-	},
+  endIf: ({ G }) => {
+    var hand
+    for (let playerId in G.players) {
+      hand = G.players[playerId].hand
+      if (hand.every( (val) => val === null ) && G.bagIndex === 0 && !G.turnPositions.length) {
+        var winner = null
+        var maxScore = 0
+        for (let playerId in G.scores) {
+          if (G.scores[playerId] > maxScore) {
+            maxScore = G.scores[playerId]
+            winner = playerId
+          }
+        }
+        return { winner }
+      }
+    }
   },
   turn: {
     order: {
@@ -333,8 +346,10 @@ export const Qwirkle : Game<QwirkleState>= {
       playOrder: ({ ctx }) => [...Array(ctx.numPlayers).keys()].map(k => String(k)),
     },
     onEnd: ({ G, ctx }) => {
-      console.log("on end called")
       updateScore(G, ctx.currentPlayer)
+      if (G.players[ctx.currentPlayer].hand.every((val) => val === null)) {
+        G.scores[ctx.currentPlayer] += 6
+      }
       G.turnPositions = []
       return fillAllHands(G)
     },

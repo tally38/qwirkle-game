@@ -125,10 +125,8 @@ export function QwirkleBoard({ ctx, G, moves, undo, events } : QwirkleProps) {
         <tbody>{tbody}</tbody>
       </table>
       <PlayerHand hand={G.players[ctx.currentPlayer]!.hand} callback={onClickTileCallback} />
-      <tr>
-        <td key="undo"><button style={cellStyle} onClick={ () => undo() }> undo </button></td>
-        <td key="end turn"><button style={cellStyle} onClick={() => endTurn()}>end turn</button></td>
-      </tr>
+      <button style={cellStyle} onClick={ () => undo() }> undo </button>
+      <button style={cellStyle} onClick={() => endTurn()}>end turn</button>
       {winner}
     </div>
   );
