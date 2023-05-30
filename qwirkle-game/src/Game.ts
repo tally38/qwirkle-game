@@ -331,20 +331,14 @@ function swapSelectedTiles(G: QwirkleState, playerID: string) {
 
 export const Qwirkle : Game<QwirkleState>= {
   setup: ({ ctx }) : QwirkleState => {
-    // TODO: use enums instead of these lists
-    const colors = ["red", "orange", "yellow", "green", "blue", "purple"];
-    const shapes = ["circle", "square", "diamond", "star", "flower", "heart"];
-  
     var bag = Array(108)
     var bagIndex = 107
+    var i = 0
     for (var k = 0; k < 3; k++) {
-      for (var i = 0; i < colors.length; i++) {
-        for (var j = 0; j < shapes.length; j++) {
-          var piece = {
-            color: colors[i],
-            shape: shapes[j]
-          };
-          bag[36*k + 6*i + j] = piece;
+      for (let color in TileColor) {
+        for (let shape in TileShape ) {
+          bag[i] = {color, shape};
+          i++
         }
       }
     }
@@ -398,7 +392,7 @@ export const Qwirkle : Game<QwirkleState>= {
       G.turnPositions.push(pos)
       G.cells[pos.i][pos.j] = tile
       removeTileFromHand(G, playerID, tile)
-      extendBoardIfNeeded(G, pos) // this needs to be calld after pushing pos on turnPositions; TODO: move to on end move
+      extendBoardIfNeeded(G, pos) // this needs to be calld after pushing pos on turnPositions
     },
     selectTileToSwap: ({ G, playerID }, tile: Tile) => {
       // Only allow swapping pieces if no tiles placed on this turn
@@ -410,20 +404,22 @@ export const Qwirkle : Game<QwirkleState>= {
     },
   },
   endIf: ({ G }) => {
-    // TODO: handle ties
     var hand
+    var winners : String[] = []
+    var maxScore = 0
+
     for (let playerID in G.players) {
       hand = G.players[playerID].hand
       if (hand.every( (val) => val === null ) && G.bagIndex === -1 && !G.turnPositions.length) {
-        var winner = null
-        var maxScore = 0
         for (let playerID in G.scores) {
           if (G.scores[playerID] > maxScore) {
             maxScore = G.scores[playerID]
-            winner = playerID
+            winners = [playerID]
+          } else if (G.scores[playerID] === maxScore) {
+            winners.push(playerID)
           }
         }
-        return { winner }
+        return winners.length > 1 ? { draw: true } : { winner: winners[0] }
       }
     }
   },
