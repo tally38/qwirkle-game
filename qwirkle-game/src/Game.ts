@@ -71,6 +71,41 @@ function shuffle(array: any[], lastIndex: number) {
   return array;
 }
 
+function areLocationsContinuous(G: QwirkleState, pos1: Position, pos2: Position) {
+  // Check if row indices are the same
+  if (pos1.i === pos2.i) {
+    // Determine the start and end column indices
+    const startCol = Math.min(pos1.j, pos2.j);
+    const endCol = Math.max(pos1.j, pos2.j);
+
+    // Iterate over column indices between start and end
+    for (let col = startCol + 1; col < endCol; col++) {
+      if (G.cells[pos1.i][col] === null) {
+        return false; // Empty location found, not continuous
+      }
+    }
+    return true; // No empty locations found, continuous in the same row
+  }
+
+  // Check if column indices are the same
+  else if (pos1.j === pos2.j) {
+    // Determine the start and end row indices
+    const startRow = Math.min(pos1.i, pos2.i);
+    const endRow = Math.max(pos1.i, pos2.i);
+
+    // Iterate over row indices between start and end
+    for (let row = startRow + 1; row < endRow; row++) {
+      if (G.cells[row][pos1.j] === null) {
+        return false; // Empty location found, not continuous
+      }
+    }
+    return true; // No empty locations found, continuous in the same column
+  }
+
+  // If neither row nor column indices are the same, not continuous
+  return false;
+}
+
 function drawTile(G: QwirkleState) {
 	var tile = G.secret.bag[G.bagIndex]
 	G.secret.bag[G.bagIndex] = null
@@ -257,11 +292,12 @@ function updateScore(G: QwirkleState, playerId: string) {
 
 export const Qwirkle : Game<QwirkleState>= {
   setup: ({ ctx }) : QwirkleState => {
+    // TODO: use enums instead of these lists
     const colors = ["red", "orange", "yellow", "green", "blue", "purple"];
     const shapes = ["circle", "square", "diamond", "star", "flower", "heart"];
   
     var bag = Array(108)
-    var bagIndex = 12
+    var bagIndex = 107
     for (var k = 0; k < 3; k++) {
       for (var i = 0; i < colors.length; i++) {
         for (var j = 0; j < shapes.length; j++) {
@@ -274,7 +310,6 @@ export const Qwirkle : Game<QwirkleState>= {
       }
     }
     shuffle(bag, bagIndex)
-
   
     var players : {
       [key: string]: Player
@@ -317,12 +352,17 @@ export const Qwirkle : Game<QwirkleState>= {
       } else if (!isStartPosition) {
         return INVALID_MOVE
       }
+      if (G.turnPositions.length && !areLocationsContinuous(G, G.turnPositions[0], pos)) {
+        return INVALID_MOVE
+      }
       G.turnPositions.push(pos)
       G.cells[pos.i][pos.j] = tile
       removeTileFromHand(G, playerID, tile)
+      // TODO: handle expanding grid as needed
     },
   },
   endIf: ({ G }) => {
+    // TODO: handle ties
     var hand
     for (let playerId in G.players) {
       hand = G.players[playerId].hand
