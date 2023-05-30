@@ -7,7 +7,30 @@ interface PlayerHandProps {
     callback: (tile: Tile) => VoidFunction
 }
 
+interface ScoreDisplayProps {
+  scores: {
+    [key: string]: number
+  }
+}
+
 interface QwirkleProps extends BoardProps<QwirkleState> {}
+
+const ScoreDisplay = (props: ScoreDisplayProps) => {
+  
+  const scoreDisplays = []
+  for (let playerId in props.scores) {
+		scoreDisplays.push(
+      <div key={playerId}>{"Player " + playerId + ": " + props.scores[playerId]}</div>
+    )
+	}
+
+  return (
+    <div>
+      <b>Scores</b>
+      {scoreDisplays}
+    </div>
+  )
+}
 
 const PlayerHand = (props: PlayerHandProps) => {
   var tiles = []
@@ -97,6 +120,7 @@ export function QwirkleBoard({ ctx, G, moves, undo, events } : QwirkleProps) {
 
   return (
     <div>
+      <ScoreDisplay scores={G.scores} />
       <table id="board">
         <tbody>{tbody}</tbody>
       </table>

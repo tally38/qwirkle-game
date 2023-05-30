@@ -46,6 +46,7 @@ export interface QwirkleState {
   scores: {
     [key: string]: number
   },
+  turnPositions: Position[],
 }
 
 function shuffle(array: any[], lastIndex: number) {
@@ -161,6 +162,12 @@ function findOpener(G: QwirkleState, ctx: Ctx ) {
 function findColumnTiles(G: QwirkleState, pos: Position) : Tile[] {
   var colTiles : Tile[] = []
   const m = G.cells.length
+
+  var tileAtPos = G.cells[pos.i][pos.j]
+  if (tileAtPos) {
+    colTiles.push(tileAtPos)
+  }
+
   var i = pos.i + 1
   while (i < m && G.cells[i][pos.j]) {
     colTiles.push(G.cells[i][pos.j]!)
@@ -177,6 +184,12 @@ function findColumnTiles(G: QwirkleState, pos: Position) : Tile[] {
 function findRowTiles(G: QwirkleState, pos: Position) : Tile[] {
   var rowTiles : Tile[] = []
   const n = G.cells[0].length
+
+  var tileAtPos = G.cells[pos.i][pos.j]
+  if (tileAtPos) {
+    rowTiles.push(tileAtPos)
+  }
+
   var j = pos.j + 1
   while (j < n && G.cells[pos.i][j]) {
     rowTiles.push(G.cells[pos.i][j]!)
@@ -208,6 +221,39 @@ function removeTileFromHand(G: QwirkleState, playerID: string, tile: Tile) {
   } else {
     throw new Error("Tile not found in player's hand")
   }
+}
+
+function updateScore(G: QwirkleState, playerId: string) {
+  var turnScore = 0
+  var pointArray : number[] = []
+  var tilesInRow = G.turnPositions.every( (val, _, arr) => val.i === arr[0].i )
+  if ( G.turnPositions.length === 0 ) {
+    return
+  }
+  var firstPos = G.turnPositions[0]
+
+  if (tilesInRow) {
+    G.turnPositions.forEach(pos => {
+      pointArray.push(findColumnTiles(G, pos).length)
+    })
+    pointArray.push(findRowTiles(G, firstPos).length)
+  } else {
+    G.turnPositions.forEach(pos => {
+      pointArray.push(findRowTiles(G, pos).length)
+    })
+    pointArray.push(findColumnTiles(G, firstPos).length)
+  }
+
+  console.log(pointArray)
+  pointArray.forEach(p => {
+    console.log(p)
+    if (p === 6) {
+      turnScore += 12
+    } else if ( p > 1 ) {
+      turnScore += p
+    }
+  })
+  G.scores[playerId] += turnScore
 }
 
 export const Qwirkle : Game<QwirkleState>= {
@@ -245,7 +291,7 @@ export const Qwirkle : Game<QwirkleState>= {
   
     var cells = Array(11).fill(Array(11).fill(null))
   
-    return {secret: {bag}, bagIndex, players, cells, scores}
+    return {secret: {bag}, bagIndex, players, cells, scores, turnPositions: []}
   },
   moves: {
     // placeholder move as I work through tutorial
@@ -269,7 +315,7 @@ export const Qwirkle : Game<QwirkleState>= {
       } else if (!isStartPosition) {
         return INVALID_MOVE
       }
-
+      G.turnPositions.push(pos)
       G.cells[pos.i][pos.j] = tile
       removeTileFromHand(G, playerID, tile)
     },
@@ -286,6 +332,11 @@ export const Qwirkle : Game<QwirkleState>= {
       next: ({ ctx }) => (ctx.playOrderPos + 1) % ctx.numPlayers,
       playOrder: ({ ctx }) => [...Array(ctx.numPlayers).keys()].map(k => String(k)),
     },
-    onEnd: ({ G }) => fillAllHands(G),
+    onEnd: ({ G, ctx }) => {
+      console.log("on end called")
+      updateScore(G, ctx.currentPlayer)
+      G.turnPositions = []
+      return fillAllHands(G)
+    },
   }
 };
