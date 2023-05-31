@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { BoardProps } from 'boardgame.io/react';
-import { QwirkleState, IPlayerHand, Tile, Position } from './Game';
+import { QwirkleState, IPlayerHand, Tile, Position, TileColor, TileShape } from './Game';
+
 
 interface PlayerHandProps {
     hand: IPlayerHand
@@ -22,6 +23,42 @@ const cellStyle = {
   height: '50px',
   lineHeight: '25px',
   textAlign: 'center' as 'center',
+};
+
+interface QwirkleTileProps {
+  color: TileColor,
+  shape: TileShape,
+}
+
+const QwirkleTile = ( props: QwirkleTileProps) => {
+  const {color, shape} = props
+
+  const shapes = {
+    'circle': 'o',
+    'heart': 'h',
+    'star': '*',
+    'square': '■',
+    'diamond': '#',
+    'flower': '@',
+  }
+
+  const tileStyles = {
+    display: 'inline-block',
+    width: '40px',
+    height: '40px',
+    backgroundColor: 'black',
+    color: color,
+    border: '1px solid black',
+    borderRadius: '5px',
+    margin: '5px',
+    textAlign: 'center' as 'center',
+    fontSize: '30px',
+    fontWeight: 'bold',
+  };
+
+
+
+  return <div style={tileStyles}>{shapes[shape]}</div>;
 };
 
 const ScoreDisplay = (props: ScoreDisplayProps) => {
@@ -47,14 +84,14 @@ const PlayerHand = (props: PlayerHandProps) => {
   for (let i = 0 ; i < props.hand.length ; i ++ ) {
     tile = props.hand[i]
     if (tile) {
-      hand.push(<td key={i} style={cellStyle} onClick={props.callback(tile)} >{tile.color + " " + tile.shape}</td>)
+      hand.push(<td key={i} style={cellStyle} onClick={props.callback(tile)} ><QwirkleTile color={tile.color} shape={tile.shape} /></td>)
     } else {
       hand.push(<td key={i} style={cellStyle} />)
     }
   }
   for (let i = 0 ; i < props.tilesToSwap.length ; i ++ ) {
     tile = props.tilesToSwap[i]
-    tilesToSwap.push(<td key={i} style={cellStyle} onClick={props.callback(tile)} >{tile.color + " " + tile.shape}</td>)
+    tilesToSwap.push(<td key={i} style={cellStyle} onClick={props.callback(tile)} ><QwirkleTile color={tile.color} shape={tile.shape} /></td>)
   }
   return (
     <>
@@ -122,7 +159,7 @@ export function QwirkleBoard({ ctx, G, moves, undo, events } : QwirkleProps) {
       cells.push(
         <td key={id}>
           {G.cells[i][j] ? (
-            <div style={cellStyle}>{cellTile.color + " " + cellTile.shape}</div>
+            <div style={cellStyle}><QwirkleTile color={cellTile.color} shape={cellTile.shape} /></div>
           ) : (
             <button style={cellStyle} onClick={() => onClickBoard({i, j})} />
           )}
@@ -137,6 +174,7 @@ export function QwirkleBoard({ ctx, G, moves, undo, events } : QwirkleProps) {
   var {hand, tilesToSwap} = G.players[ctx.currentPlayer]!
   return (
     <div>
+      <span><b>Current Player: </b>{ctx.currentPlayer}</span>
       <ScoreDisplay scores={G.scores} />
       {winner}
       <table id="board">

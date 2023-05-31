@@ -1,7 +1,7 @@
 import { Game, Ctx, AiEnumerate } from 'boardgame.io';
 import { INVALID_MOVE } from 'boardgame.io/core';
 
-enum TileColor {
+export enum TileColor {
   red = "red",
   orange = "orange",
   yellow = "yellow",
@@ -9,7 +9,7 @@ enum TileColor {
   blue = "blue",
   purple = "purple",
 }
-enum TileShape {
+export enum TileShape {
   circle = "circle",
   square = "square",
   diamond = "diamond",
@@ -285,28 +285,33 @@ function removeTileFromHand(G: QwirkleState, playerID: string, tile: Tile) {
   }
 }
 
-function validTilePlacement(G: QwirkleState, playerID: String, pos: Position, tile: Tile) {
+function validTilePlacement(G: QwirkleState, playerID: String, pos: Position, tile: Tile, debug: boolean) {
   const isStartPosition = pos.i === Math.floor(G.cells.length/2) && pos.j === Math.floor(G.cells[0].length/2)
   var rowTiles = findRowTiles(G, pos)
   var colTiles = findColumnTiles(G, pos)
   var isTouchingAnotherTile = rowTiles.length > 0 || colTiles.length > 0
 
   if (G.cells[pos.i][pos.j]) {
+    debug ?? console.log('Board position already filled.')
     return false
   }
   if (isTouchingAnotherTile) {
     rowTiles.push(tile)
     if (!tilesAreCompatible(rowTiles)) {
+      debug ?? console.log('Invalid row.')
       return false
     }
     colTiles.push(tile)
     if (!tilesAreCompatible(colTiles)) {
+      debug ?? console.log('Invalid column.')
       return false
     }
   } else if (!isStartPosition) {
+    debug ?? console.log('Tile is not touching another tile nor is this the start position.')
     return false
   }
   if (G.turnPositions.length && !areLocationsContinuous(G, G.turnPositions[0], pos)) {
+    debug ?? console.log('Tile is not in same row/col as other placed tile.')
     return false
   }
   return true
@@ -397,13 +402,14 @@ export const Qwirkle : Game<QwirkleState>= {
       if (G.cells[pos.i][pos.j] || G.players[playerID].tilesToSwap.length ) {
         return INVALID_MOVE
       }
-      if (!validTilePlacement(G, playerID, pos, tile)) {
+      if (!validTilePlacement(G, playerID, pos, tile, true)) {
         return INVALID_MOVE
       }
       G.turnPositions.push(pos)
       G.cells[pos.i][pos.j] = tile
       removeTileFromHand(G, playerID, tile)
       extendBoardIfNeeded(G, pos) // this needs to be calld after pushing pos on turnPositions
+      return G
     },
     selectTileToSwap: ({ G, playerID }, tile: Tile) => {
       // Only allow swapping pieces if no tiles placed on this turn
@@ -412,6 +418,7 @@ export const Qwirkle : Game<QwirkleState>= {
       }
       removeTileFromHand(G, playerID, tile)
       G.players[playerID].tilesToSwap.push(tile)
+      return G
     },
   },
   endIf: ({ G }) => {
@@ -454,8 +461,11 @@ export const Qwirkle : Game<QwirkleState>= {
     },
   },
   ai: {
-    enumerate: (G, _, playerID) => {
+    enumerate: (G, ctx, playerID) => {
       let moves : AiEnumerate = [];
+      if (ctx.currentPlayer !== playerID) {
+        return moves
+      }
       moves.push({'event': 'endTurn'})
       if (!G.players[playerID].tilesToSwap.length) {
         for (let i = 0; i < G.cells.length ; i++) {
@@ -463,7 +473,7 @@ export const Qwirkle : Game<QwirkleState>= {
             G.players[playerID].hand.forEach(tile => {
               if (tile) {
                 var pos = {i, j}
-                if (validTilePlacement(G, playerID, pos, tile)) {
+                if (validTilePlacement(G, playerID, pos, tile, false)) {
                   moves.push({ move: 'placeTile', args: [pos, tile] });
                 }
               }
