@@ -83,7 +83,6 @@ const BotControls = (props : BotControlsProps) => {
   useEffect(() => {
     if (!client) return;
     client.subscribe((state: State) => {
-      console.log(state)
       setState(state)
     });
   }, [client, difficulty]);

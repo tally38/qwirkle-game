@@ -285,33 +285,28 @@ function removeTileFromHand(G: QwirkleState, playerID: string, tile: Tile) {
   }
 }
 
-function validTilePlacement(G: QwirkleState, playerID: String, pos: Position, tile: Tile, debug: boolean) {
+function validTilePlacement(G: QwirkleState, playerID: String, pos: Position, tile: Tile) {
   const isStartPosition = pos.i === Math.floor(G.cells.length/2) && pos.j === Math.floor(G.cells[0].length/2)
   var rowTiles = findRowTiles(G, pos)
   var colTiles = findColumnTiles(G, pos)
   var isTouchingAnotherTile = rowTiles.length > 0 || colTiles.length > 0
 
   if (G.cells[pos.i][pos.j]) {
-    debug ?? console.log('Board position already filled.')
     return false
   }
   if (isTouchingAnotherTile) {
     rowTiles.push(tile)
     if (!tilesAreCompatible(rowTiles)) {
-      debug ?? console.log('Invalid row.')
       return false
     }
     colTiles.push(tile)
     if (!tilesAreCompatible(colTiles)) {
-      debug ?? console.log('Invalid column.')
       return false
     }
   } else if (!isStartPosition) {
-    debug ?? console.log('Tile is not touching another tile nor is this the start position.')
     return false
   }
   if (G.turnPositions.length && !areLocationsContinuous(G, G.turnPositions[0], pos)) {
-    debug ?? console.log('Tile is not in same row/col as other placed tile.')
     return false
   }
   return true
@@ -400,12 +395,10 @@ export const Qwirkle : Game<QwirkleState>= {
   moves: {
     // placeholder move as I work through tutorial
     placeTile: ({ G, playerID }, pos: Position, tile: Tile) => {
-      console.log('logging playerID: ' + playerID)
-      console.log('logging G.players[playerID]: ' + G.players[playerID].tilesToSwap === undefined)
       if (G.cells[pos.i][pos.j] || G.players[playerID].tilesToSwap.length ) {
         return INVALID_MOVE
       }
-      if (!validTilePlacement(G, playerID, pos, tile, true)) {
+      if (!validTilePlacement(G, playerID, pos, tile)) {
         return INVALID_MOVE
       }
       G.turnPositions.push(pos)
@@ -476,7 +469,7 @@ export const Qwirkle : Game<QwirkleState>= {
             G.players[playerID].hand.forEach(tile => {
               if (tile) {
                 var pos = {i, j}
-                if (validTilePlacement(G, playerID, pos, tile, false)) {
+                if (validTilePlacement(G, playerID, pos, tile)) {
                   moves.push({ move: 'placeTile', args: [pos, tile] });
                 }
               }
