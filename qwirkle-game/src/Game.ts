@@ -400,7 +400,7 @@ export const Qwirkle : Game<QwirkleState>= {
     // placeholder move as I work through tutorial
     placeTile: ({ G, playerID }, pos: Position, tile: Tile) => {
       console.log('logging playerID: ' + playerID)
-      console.log('logging G.players[playerID]: ' + G.players[playerID].tilesToSwap == undefined)
+      console.log('logging G.players[playerID]: ' + G.players[playerID].tilesToSwap === undefined)
       if (G.cells[pos.i][pos.j] || G.players[playerID].tilesToSwap.length ) {
         return INVALID_MOVE
       }

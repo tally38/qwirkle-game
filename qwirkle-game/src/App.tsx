@@ -9,7 +9,7 @@ import { QwirkleBoard } from './Board';
 import { SocketIO } from 'boardgame.io/multiplayer';
 
 const { protocol, hostname, port } = window.location;
-const server = `${protocol}//${hostname}:8000`;
+const server = `${protocol}//${hostname}:${port}`;
 
 const AiApp = Client({
   game: Qwirkle,
