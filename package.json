@@ -23,13 +23,14 @@
     "web-vitals": "^2.1.0"
   },
   "scripts": {
-    "start": "react-scripts start",
-    "build": "react-scripts build",
-    "test": "react-scripts test",
-    "eject": "react-scripts eject",
     "build:server": "tsc -p tsconfig.server.json",
     "start:server": "node -r esm build/server/server.js",
-    "serve": "yarn build:server && yarn start:server"
+    "build": "react-scripts build && yarn build:server",
+    "test": "react-scripts test",
+    "eject": "react-scripts eject",
+    "serve": "yarn build:server && yarn start:server",
+    "start:frontend": "react-scripts start",
+    "start": "yarn start:server"
   },
   "eslintConfig": {
     "extends": [
