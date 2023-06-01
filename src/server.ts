@@ -9,19 +9,19 @@ const server = Server({
 
   origins: [
     // Allow your game site to connect.
-    'https://www.mygame.domain',
+    'https://qwirkle-game.herokuapp.com',
     // Allow localhost to connect, except when NODE_ENV is 'production'.
     Origins.LOCALHOST_IN_DEVELOPMENT
   ],
 });
 
-const PORT = 8000 // process.env.PORT || 8000;
+const PORT = parseInt(process.env.PORT ?? "8000");
 
 // Build path relative to the server.js file
 const frontEndAppBuildPath = path.resolve(__dirname, '..');
 server.app.use(serve(frontEndAppBuildPath))
 
-server.run(8000, () => {
+server.run(PORT, () => {
   server.app.use(
     async (ctx, next) => await serve(frontEndAppBuildPath)(
       Object.assign(ctx, { path: 'index.html' }),

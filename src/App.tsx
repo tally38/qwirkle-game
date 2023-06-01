@@ -9,8 +9,8 @@ import { QwirkleBoard } from './Board';
 import { Lobby } from 'boardgame.io/react';
 
 
-const { protocol, hostname } = window.location;
-const server = `${protocol}//${hostname}:8000`;
+const { protocol, hostname, port } = window.location;
+const server = `${protocol}//${hostname}:${port}`;
 const importedGames = [{ game: Qwirkle, board: QwirkleBoard }];
 
 const AiApp = Client({
