@@ -6,6 +6,10 @@ import { Local } from 'boardgame.io/multiplayer';
 import { MCTSBot, Step } from 'boardgame.io/ai';
 import { Qwirkle } from './Game';
 import { QwirkleBoard } from './Board';
+import { SocketIO } from 'boardgame.io/multiplayer';
+
+const { protocol, hostname, port } = window.location;
+const server = `${protocol}//${hostname}:8000`;
 
 const AiApp = Client({
   game: Qwirkle,
@@ -19,7 +23,7 @@ const SoloApp = Client({
     game: Qwirkle,
     board: QwirkleBoard,
     debug: true,
-    multiplayer: undefined,
+    multiplayer: SocketIO({ server }),
   });
   
 
@@ -46,7 +50,6 @@ const BotControls = (props : BotControlsProps) => {
   var {playerID, matchID} = props
   const [difficulty, setDifficulty] = useState<'easy' | 'hard'>('easy');
   const [client, setClient] = useState<any>();
-  const [stateID, setStateID] = useState<number>(-1)
   const [state, setState] = useState<State | null>(null)
   
   const { iterations, playoutDepth } = difficulties[difficulty];
@@ -86,16 +89,15 @@ const BotControls = (props : BotControlsProps) => {
     if (!client) return;
     client.subscribe((state: State) => {
       console.log(state)
-      setStateID(state._stateID)
       setState(state)
     });
   }, [client, difficulty]);
 
   useEffect(() => {
-    if (state && state.ctx.currentPlayer == playerID) {
+    if (state && state.ctx.currentPlayer === playerID) {
       Step(client, bot)
     }
-  }, [state]);
+  }, [state, bot, client, playerID]);
 
 
   // Render AI difficulty toggle buttons.
@@ -123,7 +125,7 @@ const AdvancedAI = () => {
   return (
     <div>
       <h1>Qwirkle</h1>
-      {playAgainstAI ? <AiApp playerID="0" matchID="advanced-ai" /> : <SoloApp />}
+      {playAgainstAI ? <AiApp playerID="0" matchID="advanced-ai" /> : <SoloApp playerID="0" />}
       <button
         onClick={() => setPlayAgainstAI(!playAgainstAI)}
       >

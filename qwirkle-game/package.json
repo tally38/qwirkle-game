@@ -9,10 +9,13 @@
     "@testing-library/react": "^13.0.0",
     "@testing-library/user-event": "^13.2.1",
     "@types/jest": "^27.0.1",
+    "@types/koa-static": "^4.0.2",
     "@types/node": "^16.7.13",
     "@types/react": "^18.0.0",
     "@types/react-dom": "^18.0.0",
     "boardgame.io": "^0.50.2",
+    "esm": "^3.2.25",
+    "koa-static": "^5.0.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-scripts": "5.0.1",
@@ -23,7 +26,10 @@
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "eject": "react-scripts eject",
+    "build:server": "tsc -p tsconfig.server.json",
+    "start:server": "node -r esm build/server/server.js",
+    "serve": "yarn build:server && yarn start:server"
   },
   "eslintConfig": {
     "extends": [
