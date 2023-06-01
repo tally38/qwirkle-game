@@ -362,6 +362,7 @@ function swapSelectedTiles(G: QwirkleState, playerID: string) {
 }
 
 export const Qwirkle : Game<QwirkleState>= {
+  name: 'qwirkle',
   setup: ({ ctx }) : QwirkleState => {
     var bag = Array(108)
     var bagIndex = 107
