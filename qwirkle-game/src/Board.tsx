@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { BoardProps } from 'boardgame.io/react';
 import { QwirkleState, IPlayerHand, Tile, Position, TileColor, TileShape } from './Game';
+import { Star, FilterVintage, ChangeHistory, Stop, Lens, Favorite } from '@material-ui/icons';
 
 
 interface PlayerHandProps {
@@ -34,12 +35,12 @@ const QwirkleTile = ( props: QwirkleTileProps) => {
   const {color, shape} = props
 
   const shapes = {
-    'circle': 'o',
-    'heart': 'h',
-    'star': '*',
-    'square': '■',
-    'diamond': '#',
-    'flower': '@',
+    'circle': <Lens style={{fontSize: '40px'}}/>,
+    'heart': <Favorite style={{fontSize: '40px'}}/>,
+    'star': <Star style={{fontSize: '40px'}}/>,
+    'square': <Stop style={{fontSize: '40px'}}/>,
+    'diamond': <ChangeHistory style={{fontSize: '40px'}}/>,
+    'flower': <FilterVintage style={{fontSize: '40px'}}/>,
   }
 
   const tileStyles = {
@@ -52,8 +53,9 @@ const QwirkleTile = ( props: QwirkleTileProps) => {
     borderRadius: '5px',
     margin: '5px',
     textAlign: 'center' as 'center',
-    fontSize: '30px',
+    fontSize: '40px',
     fontWeight: 'bold',
+    verticalAlign: 'middle',
   };
 
 

@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { State } from 'boardgame.io';
 import { Client as PlainJSClient } from 'boardgame.io/client';
 import { Client } from 'boardgame.io/react';
 import { Local } from 'boardgame.io/multiplayer';
@@ -45,6 +46,16 @@ const BotControls = (props : BotControlsProps) => {
   var {playerID, matchID} = props
   const [difficulty, setDifficulty] = useState<'easy' | 'hard'>('easy');
   const [client, setClient] = useState<any>();
+  const [stateID, setStateID] = useState<number>(-1)
+  const [state, setState] = useState<State | null>(null)
+  
+  const { iterations, playoutDepth } = difficulties[difficulty];
+  const [bot, setBot] = useState<MCTSBot>(new MCTSBot({
+    game: Qwirkle,
+    enumerate: Qwirkle.ai!.enumerate,
+    iterations,
+    playoutDepth,
+  }))
 
   // Create a plain Javascript boardgame.io client on mount.
   useEffect(() => {
@@ -61,26 +72,31 @@ const BotControls = (props : BotControlsProps) => {
     return () => newClient.stop();
   }, [matchID, playerID]);
 
-  // Update the client subscription when bot difficulty changes.
+  useEffect(() => {
+    const { iterations, playoutDepth } = difficulties[difficulty];
+    setBot(new MCTSBot({
+      game: Qwirkle,
+      enumerate: Qwirkle.ai!.enumerate,
+      iterations,
+      playoutDepth,
+    }))
+  }, [difficulty]);
+
   useEffect(() => {
     if (!client) return;
-    // Subscribe to the client with a function that will run AI on a bot
-    // player’s turn.
-    return client.subscribe((state: any) => {
-      if (!state) return;
+    client.subscribe((state: State) => {
       console.log(state)
-      if (state.ctx.currentPlayer === playerID) {
-        const { iterations, playoutDepth } = difficulties[difficulty];
-        const bot = new MCTSBot({
-          game: Qwirkle,
-          enumerate: Qwirkle.ai!.enumerate,
-          iterations,
-          playoutDepth,
-        });
-        setTimeout(() => Step(client, bot), 0);
-      }
+      setStateID(state._stateID)
+      setState(state)
     });
-  }, [client, difficulty, playerID]);
+  }, [client, difficulty]);
+
+  useEffect(() => {
+    if (state && state.ctx.currentPlayer == playerID) {
+      Step(client, bot)
+    }
+  }, [state]);
+
 
   // Render AI difficulty toggle buttons.
   return (
