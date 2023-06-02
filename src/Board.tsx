@@ -205,7 +205,7 @@ export function QwirkleBoard({ ctx, G, moves, undo, events, playerID, matchData,
         <tbody>
           <tr>
             <td key="tiles-remaining">
-              <b>Tiles Remaining</b>
+              <b>Tiles Remaining:</b>
             </td>
             <td key="undo">
               {G.bagIndex + 1}

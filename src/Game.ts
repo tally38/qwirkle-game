@@ -51,7 +51,7 @@ export interface QwirkleState {
 }
 
 function shuffle(array: any[], lastIndex: number) {
-	if (lastIndex >= array.length) {
+	if (lastIndex >= array.length || lastIndex < 0) {
 		throw new Error("Last index " + lastIndex + " is out of bounds for array of length " + array.length + ".")
 	}
 
@@ -346,6 +346,9 @@ function updateScore(G: QwirkleState, playerID: string) {
 function swapSelectedTiles(G: QwirkleState, playerID: string) {
   // Only allow swapping pieces if no tiles placed on this turn
   var tile
+  if (!G.players[playerID].tilesToSwap.length) {
+    return
+  }
   for (let i = 0 ; i < G.players[playerID].tilesToSwap.length ; i++ ) {
     tile = G.players[playerID].tilesToSwap[i]
     G.bagIndex++
@@ -478,7 +481,7 @@ export const Qwirkle : Game<QwirkleState>= {
       }
       if (!G.turnPositions.length) {
         G.players[playerID].hand.forEach(tile => {
-          if (tile) {
+          if (tile && G.bagIndex >= 0) {
             moves.push({ move: 'selectTileToSwap', args: [tile] });
           }
         })
