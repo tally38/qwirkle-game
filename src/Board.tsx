@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { BoardProps } from 'boardgame.io/react';
+import { FilteredMetadata } from 'boardgame.io';
 import { QwirkleState, IPlayerHand, Tile, Position, TileColor, TileShape } from './Game';
 import { Star, FilterVintage, ChangeHistory, Stop, Lens, Favorite } from '@material-ui/icons';
 
@@ -8,12 +9,15 @@ interface PlayerHandProps {
     hand: IPlayerHand
     callback: (tile: Tile) => VoidFunction
     tilesToSwap: Tile[]
+    isActive: boolean
 }
 
 interface ScoreDisplayProps {
   scores: {
     [key: string]: number
-  }
+  },
+  matchData?: FilteredMetadata
+
 }
 
 interface QwirkleProps extends BoardProps<QwirkleState> {}
@@ -63,11 +67,26 @@ const QwirkleTile = ( props: QwirkleTileProps) => {
   return <div style={tileStyles}>{shapes[shape]}</div>;
 };
 
+
+
+function findPlayerName(matchData: FilteredMetadata | undefined, playerID: string) : string {
+  var playerName = "Player " + playerID;
+  if (matchData) {
+    matchData.forEach((p) => {
+      if (p['id'] === parseInt(playerID)) {
+        playerName = p['name'] || playerName
+      }
+    })
+  }
+  return playerName
+}
+
 const ScoreDisplay = (props: ScoreDisplayProps) => {
+  const {scores, matchData } = props
   const scoreDisplays = []
-  for (let playerId in props.scores) {
+  for (let playerID in scores) {
 		scoreDisplays.push(
-      <div key={playerId}>{"Player " + playerId + ": " + props.scores[playerId]}</div>
+      <div key={playerID}>{findPlayerName(matchData, playerID) + ": " + props.scores[playerID]}</div>
     )
 	}
 
@@ -79,6 +98,8 @@ const ScoreDisplay = (props: ScoreDisplayProps) => {
   )
 }
 
+const doNothing = () => null;
+
 const PlayerHand = (props: PlayerHandProps) => {
   var hand = []
   var tilesToSwap = []
@@ -86,14 +107,14 @@ const PlayerHand = (props: PlayerHandProps) => {
   for (let i = 0 ; i < props.hand.length ; i ++ ) {
     tile = props.hand[i]
     if (tile) {
-      hand.push(<td key={i} style={cellStyle} onClick={props.callback(tile)} ><QwirkleTile color={tile.color} shape={tile.shape} /></td>)
+      hand.push(<td key={i} style={cellStyle} onClick={props.isActive ? props.callback(tile) : doNothing} ><QwirkleTile color={tile.color} shape={tile.shape} /></td>)
     } else {
       hand.push(<td key={i} style={cellStyle} />)
     }
   }
   for (let i = 0 ; i < props.tilesToSwap.length ; i ++ ) {
     tile = props.tilesToSwap[i]
-    tilesToSwap.push(<td key={i} style={cellStyle} onClick={props.callback(tile)} ><QwirkleTile color={tile.color} shape={tile.shape} /></td>)
+    tilesToSwap.push(<td key={i} style={cellStyle} ><QwirkleTile color={tile.color} shape={tile.shape} /></td>)
   }
   return (
     <>
@@ -111,7 +132,7 @@ const PlayerHand = (props: PlayerHandProps) => {
 
 
 
-export function QwirkleBoard({ ctx, G, moves, undo, events } : QwirkleProps) {
+export function QwirkleBoard({ ctx, G, moves, undo, events, playerID, matchData, isActive } : QwirkleProps) {
   const [position, setPosition] = useState<Position | null>(null);
   const [tile, setTile] = useState<Tile | null>(null);
 
@@ -135,7 +156,7 @@ export function QwirkleBoard({ ctx, G, moves, undo, events } : QwirkleProps) {
   }
 
   function onClickTileCallback(clickedTile: Tile) {
-    function onClickTile() {;
+    function onClickTile() {
       setTile(clickedTile)
     }
     return onClickTile
@@ -163,40 +184,39 @@ export function QwirkleBoard({ ctx, G, moves, undo, events } : QwirkleProps) {
           {G.cells[i][j] ? (
             <div style={cellStyle}><QwirkleTile color={cellTile.color} shape={cellTile.shape} /></div>
           ) : (
-            <button style={cellStyle} onClick={() => onClickBoard({i, j})} />
+            <button disabled={!isActive} style={cellStyle} onClick={() => onClickBoard({i, j})} />
           )}
         </td>
       );
     }
     tbody.push(<tr key={i}>{cells}</tr>);
   }
+  console.log("playerID: " + playerID)
 
   var endTurn = events.endTurn ? events.endTurn : (() => {return});
-
-  var {hand, tilesToSwap} = G.players[ctx.currentPlayer]!
   return (
     <div>
-      <span><b>Current Player: </b>{ctx.currentPlayer}</span>
-      <ScoreDisplay scores={G.scores} />
+      <span><b>Current Player: </b>{findPlayerName(matchData, ctx.currentPlayer)}</span>
+      <ScoreDisplay scores={G.scores} matchData={matchData} />
       {winner}
       <table id="board">
         <tbody>{tbody}</tbody>
       </table>
       <table id="player-dashboard">
         <tbody>
-          <PlayerHand hand={hand} tilesToSwap={tilesToSwap} callback={onClickTileCallback} />
+          {playerID ? <PlayerHand isActive={isActive} hand={G.players[playerID!].hand} tilesToSwap={G.players[playerID!].tilesToSwap} callback={onClickTileCallback} /> : null }
           <tr>
             <td key="action-header">
               <b>Actions</b>
             </td>
             <td key="undo">
-              <button style={cellStyle} onClick={ () => undo() }> undo </button>
+              <button disabled={!isActive} style={cellStyle} onClick={ () => undo() }> undo </button>
             </td>
             <td key="end-turn">
-              <button style={cellStyle} onClick={() => endTurn()}>end turn</button>
+              <button disabled={!isActive} style={cellStyle} onClick={() => endTurn()}>end turn</button>
             </td>
             <td key="swap">
-              <button style={cellStyle} onClick={() => onClickSwap()}>swap</button>
+              <button disabled={!isActive} style={cellStyle} onClick={() => onClickSwap()}>swap</button>
             </td>
           </tr>
         </tbody>
