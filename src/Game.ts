@@ -157,7 +157,6 @@ function fillAllHands(G: QwirkleState) {
 	for (let playerID in G.players) {
 		fillHand(G, playerID)
 	}
-  return G
 }
 
 function tilesAreCompatible(tiles: Tile[]) {
@@ -396,16 +395,17 @@ export const Qwirkle : Game<QwirkleState>= {
   moves: {
     // placeholder move as I work through tutorial
     placeTile: ({ G, playerID }, pos: Position, tile: Tile) => {
-      if (G.cells[pos.i][pos.j] || G.players[playerID].tilesToSwap.length ) {
+      const posCopy = {...pos}
+      if (G.players[playerID].tilesToSwap.length ) {
         return INVALID_MOVE
       }
-      if (!validTilePlacement(G, playerID, pos, tile)) {
+      if (!validTilePlacement(G, playerID, posCopy, tile)) {
         return INVALID_MOVE
       }
-      G.turnPositions.push(pos)
-      G.cells[pos.i][pos.j] = tile
+      G.turnPositions.push(posCopy)
+      G.cells[posCopy.i][posCopy.j] = tile
       removeTileFromHand(G, playerID, tile)
-      extendBoardIfNeeded(G, pos) // this needs to be calld after pushing pos on turnPositions
+      extendBoardIfNeeded(G, posCopy) // this needs to be calld after pushing pos on turnPositions
     },
     selectTileToSwap: ({ G, playerID }, tile: Tile) => {
       // Only allow swapping pieces if no tiles placed on this turn
@@ -452,7 +452,7 @@ export const Qwirkle : Game<QwirkleState>= {
         G.scores[ctx.currentPlayer] += 6
       }
       G.turnPositions = []
-      return fillAllHands(G)
+      fillAllHands(G)
     },
   },
   ai: {
