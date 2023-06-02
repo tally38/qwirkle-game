@@ -112,18 +112,19 @@ function extendBoardIfNeeded(G: QwirkleState, pos: Position) {
   // update all active turnPositions to be consistent with the new board
   if ( pos.i === 0 ) {
     G.cells.unshift(Array(G.cells[0].length).fill(null))
-    G.turnPositions.forEach(pos => {
-      pos.i++
+    G.turnPositions.forEach(p => {
+      p.i++
     })
   } else if ( pos.i === G.cells.length - 1 ) {
     G.cells.push(Array(G.cells[0].length).fill(null))
   }
+  
   if ( pos.j === 0 ) {
     for (let i = 0 ; i < G.cells.length ; i++) {
       G.cells[i].unshift(null)
     }
-    G.turnPositions.forEach(pos => {
-      pos.j++
+    G.turnPositions.forEach(p => {
+      p.j++
     })
   } else if ( pos.j === G.cells[0].length - 1) {
     for (let i = 0 ; i < G.cells.length ; i++) {
@@ -405,7 +406,6 @@ export const Qwirkle : Game<QwirkleState>= {
       G.cells[pos.i][pos.j] = tile
       removeTileFromHand(G, playerID, tile)
       extendBoardIfNeeded(G, pos) // this needs to be calld after pushing pos on turnPositions
-      return G
     },
     selectTileToSwap: ({ G, playerID }, tile: Tile) => {
       // Only allow swapping pieces if no tiles placed on this turn
@@ -414,7 +414,6 @@ export const Qwirkle : Game<QwirkleState>= {
       }
       removeTileFromHand(G, playerID, tile)
       G.players[playerID].tilesToSwap.push(tile)
-      return G
     },
   },
   endIf: ({ G }) => {

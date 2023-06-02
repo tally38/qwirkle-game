@@ -191,7 +191,6 @@ export function QwirkleBoard({ ctx, G, moves, undo, events, playerID, matchData,
     }
     tbody.push(<tr key={i}>{cells}</tr>);
   }
-  console.log("playerID: " + playerID)
 
   var endTurn = events.endTurn ? events.endTurn : (() => {return});
   return (
