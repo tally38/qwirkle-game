@@ -203,6 +203,14 @@ export function QwirkleBoard({ ctx, G, moves, undo, events, playerID, matchData,
       </table>
       <table id="player-dashboard">
         <tbody>
+          <tr>
+            <td key="tiles-remaining">
+              <b>Tiles Remaining</b>
+            </td>
+            <td key="undo">
+              {G.bagIndex + 1}
+            </td>
+          </tr>
           {playerID ? <PlayerHand isActive={isActive} hand={G.players[playerID!].hand} tilesToSwap={G.players[playerID!].tilesToSwap} callback={onClickTileCallback} /> : null }
           <tr>
             <td key="action-header">
