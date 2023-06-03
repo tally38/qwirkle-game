@@ -62,11 +62,12 @@ function shuffle(array: any[], lastIndex: number) {
 
     // Pick a remaining element.
     randomIndex = Math.floor(Math.random() * currentIndex);
-    currentIndex--;
 
     // And swap it with the current element.
     [array[currentIndex], array[randomIndex]] = [
       array[randomIndex], array[currentIndex]];
+
+    currentIndex--;
   }
 
   return array;
