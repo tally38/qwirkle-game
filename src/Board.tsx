@@ -132,7 +132,7 @@ const PlayerHand = (props: PlayerHandProps) => {
 
 
 
-export function QwirkleBoard({ ctx, G, moves, undo, events, playerID, matchData, isActive } : QwirkleProps) {
+export function QwirkleBoard({ ctx, G, moves, undo, playerID, matchData, isActive } : QwirkleProps) {
   const [position, setPosition] = useState<Position | null>(null);
   const [tile, setTile] = useState<Tile | null>(null);
 
@@ -192,7 +192,6 @@ export function QwirkleBoard({ ctx, G, moves, undo, events, playerID, matchData,
     tbody.push(<tr key={i}>{cells}</tr>);
   }
 
-  var endTurn = events.endTurn ? events.endTurn : (() => {return});
   return (
     <div>
       <span><b>Current Player: </b>{findPlayerName(matchData, ctx.currentPlayer)}</span>
@@ -220,7 +219,7 @@ export function QwirkleBoard({ ctx, G, moves, undo, events, playerID, matchData,
               <button disabled={!isActive} style={cellStyle} onClick={ () => undo() }> undo </button>
             </td>
             <td key="end-turn">
-              <button disabled={!isActive} style={cellStyle} onClick={() => endTurn()}>end turn</button>
+              <button disabled={!isActive} style={cellStyle} onClick={() => moves.endTurn()}>end turn</button>
             </td>
             <td key="swap">
               <button disabled={!isActive} style={cellStyle} onClick={() => onClickSwap()}>swap</button>
