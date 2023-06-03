@@ -166,7 +166,7 @@ export function QwirkleBoard({ ctx, G, moves, undo, events, playerID, matchData,
   if (ctx.gameover) {
     winner =
       ctx.gameover.winner !== undefined ? (
-        <div id="winner">Winner: {ctx.gameover.winner}</div>
+        <div id="winner">Winner: {findPlayerName(matchData, ctx.gameover.winner)}</div>
       ) : (
         <div id="winner">Draw!</div>
       );
