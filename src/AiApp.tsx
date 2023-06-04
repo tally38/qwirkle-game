@@ -6,26 +6,14 @@ import { Local } from 'boardgame.io/multiplayer';
 import { MCTSBot, Step } from 'boardgame.io/ai';
 import { Qwirkle } from './Game';
 import { QwirkleBoard } from './Board';
-import { Lobby } from 'boardgame.io/react';
 
-
-const { protocol, hostname } = window.location;
-var { port } = window.location;
-if (!process.env.NODE_ENV || process.env.NODE_ENV === 'development') {
-  port = '8000'
-}
-const server = `${protocol}//${hostname}:${port}`;
-
-const importedGames = [{ game: Qwirkle, board: QwirkleBoard }];
-
-const AiApp = Client({
+const LocalApp = Client({
   game: Qwirkle,
   board: QwirkleBoard,
   debug: true,
   // Use Local transport for communication with bots.
   multiplayer: Local(),
 });
-
 
 /**
  * Component that controls and runs a custom bot instance.
@@ -119,24 +107,13 @@ const BotControls = (props : BotControlsProps) => {
   );
 };
 
-const AdvancedAI = () => {
-  const [playAgainstAI, setPlayAgainstAI] = useState<boolean>(false);
+const AiApp = () => {
   return (
     <div>
-      <h1>Qwirkle</h1>
-      <button
-        onClick={() => setPlayAgainstAI(!playAgainstAI)}
-      >
-        Play Against AI
-        {playAgainstAI ? ' (on)' : ' (off)'}
-      </button>
-      {playAgainstAI ?
-        <AiApp playerID="0" matchID="advanced-ai" /> :
-        <Lobby gameServer={server} lobbyServer={server} gameComponents={importedGames} />
-      }
-      {playAgainstAI ? <BotControls playerID="1" matchID="advanced-ai" /> : null}
+      <LocalApp playerID="0" matchID="advanced-ai" />
+      <BotControls playerID="1" matchID="advanced-ai" />
     </div>
   );
 };
 
-export default AdvancedAI;
+export default AiApp;
