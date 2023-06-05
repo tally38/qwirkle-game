@@ -3,16 +3,40 @@ import ReactDOM from 'react-dom/client';
 import {
   createBrowserRouter,
   RouterProvider,
+  Outlet,
+  Link,
 } from "react-router-dom";
 import './index.css';
 import Lobby from './Lobby';
 import AiApp from './AiApp';
 import reportWebVitals from './reportWebVitals';
 
+const AppWrapper = () => {
+  return (
+    <>
+      <h1>Qwirkle</h1>
+      <span><Link to='/' >Play With Others</Link></span>
+      <span>  |  </span>
+      <span><Link to='/ai' >Play Against (a bad) AI</Link></span>
+      <Outlet />
+    </>
+  )
+}
+
 const router = createBrowserRouter([
   {
     path: "/",
-    element: <Lobby />,
+    element: <AppWrapper />,
+    children: [
+      {
+        path: "/",
+        element: <Lobby />,
+      },
+      {
+        path: "/ai",
+        element: <AiApp />,
+      },
+    ]
   },
   {
     path: "/ai",
@@ -25,7 +49,6 @@ const root = ReactDOM.createRoot(
 );
 root.render(
   <React.StrictMode>
-    <h1>Qwirkle</h1>
     <RouterProvider router={router} />
   </React.StrictMode>
 );
