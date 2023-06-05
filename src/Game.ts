@@ -1,5 +1,5 @@
 import { Game, Ctx, AiEnumerate } from 'boardgame.io';
-import { INVALID_MOVE } from 'boardgame.io/core';
+import { INVALID_MOVE, PlayerView } from 'boardgame.io/core';
 
 export enum TileColor {
   red = "red",
@@ -439,21 +439,34 @@ export const Qwirkle : Game<QwirkleState>= {
       removeTileFromHand(G, playerID, tile)
       G.players[playerID].tilesToSwap.push(tile)
     },
-    endTurn: ({ G, ctx, events, playerID } ) => {
-      if (ctx.currentPlayer !== playerID) {
-        return INVALID_MOVE
-      }
-      if (ctx.turn === 1 && G.players[playerID].tilesToSwap.length) {
-        return INVALID_MOVE
-      }
-      if (ctx.turn === 1) {
-        var allTiles : Tile[] = G.turnPositions.map(pos => G.cells[pos.i][pos.j] as Tile)
-        allTiles.push(...G.players[playerID].hand.filter( t => !!t ) as Tile[])
-        if (G.turnPositions.length !== findValidOpeningMoves(allTiles)[0].length ) {
+    endTurn: {
+      move: ({ G, ctx, events, playerID } ) => {
+        if (ctx.currentPlayer !== playerID) {
           return INVALID_MOVE
         }
-      }
-      events.endTurn()
+        if (ctx.turn === 1 && G.players[playerID].tilesToSwap.length) {
+          return INVALID_MOVE
+        }
+        if (ctx.turn === 1) {
+          var allTiles : Tile[] = G.turnPositions.map(pos => G.cells[pos.i][pos.j] as Tile)
+          allTiles.push(...G.players[playerID].hand.filter( t => !!t ) as Tile[])
+          if (G.turnPositions.length !== findValidOpeningMoves(allTiles)[0].length ) {
+            return INVALID_MOVE
+          }
+        }
+        if (G.players[playerID].tilesToSwap.length && G.turnPositions.length) {
+          throw new Error("Player swapped and placed tiles within same turn.")
+        }
+        updateScore(G, playerID)
+        swapSelectedTiles(G, playerID)
+        if (G.players[playerID].hand.every((val) => val === null)) {
+          G.scores[playerID] += 6
+        }
+        G.turnPositions = []
+        fillHand(G, playerID)
+        events.endTurn()
+      },
+      client: false,
     }
   },
   endIf: ({ G }) => {
@@ -481,18 +494,6 @@ export const Qwirkle : Game<QwirkleState>= {
       first: ({ G, ctx }) => findOpener(G, ctx),
       next: ({ ctx }) => (ctx.playOrderPos + 1) % ctx.numPlayers,
       playOrder: ({ ctx }) => [...Array(ctx.numPlayers).keys()].map(k => String(k)),
-    },
-    onEnd: ({ G, ctx }) => {
-      if (G.players[ctx.currentPlayer].tilesToSwap.length && G.turnPositions.length) {
-        throw new Error("Player swapped and placed tiles within same turn.")
-      }
-      updateScore(G, ctx.currentPlayer)
-      swapSelectedTiles(G, ctx.currentPlayer)
-      if (G.players[ctx.currentPlayer].hand.every((val) => val === null)) {
-        G.scores[ctx.currentPlayer] += 6
-      }
-      G.turnPositions = []
-      fillAllHands(G)
     },
   },
   ai: {
@@ -530,5 +531,6 @@ export const Qwirkle : Game<QwirkleState>= {
     endGame: false,
     endTurn: false,
   },
+  playerView: PlayerView.STRIP_SECRETS,
 };
 // TODO: detect when there are no valid turns end game
