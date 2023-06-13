@@ -48,6 +48,9 @@ export interface QwirkleState {
     [key: string]: number
   },
   turnPositions: Position[],
+  previousScores: {
+    [key: string]: number
+  }
 }
 
 function shuffle(array: any[], lastIndex: number) {
@@ -399,17 +402,21 @@ export const Qwirkle : Game<QwirkleState>= {
     var scores : {
       [key: string]: number
     } = {}
+    var previousScores : {
+      [key: string]: number
+    } = {}
     for (i = 0 ; i < ctx.numPlayers ; i++) {
       players[String(i)] = {
         hand: Array(6).fill(null),
         tilesToSwap: []
       }
       scores[String(i)] = 0
+      previousScores[String(i)] = 0
     }
     var initialBoardSize = 5
     var cells = Array(initialBoardSize).fill(Array(initialBoardSize).fill(null))
 
-    var G : QwirkleState = {secret: {bag}, bagIndex, players, cells, scores, turnPositions: []}
+    var G : QwirkleState = {secret: {bag}, bagIndex, players, cells, scores, turnPositions: [], previousScores}
     fillAllHands(G)
     return G
   },
@@ -495,6 +502,9 @@ export const Qwirkle : Game<QwirkleState>= {
       next: ({ ctx }) => (ctx.playOrderPos + 1) % ctx.numPlayers,
       playOrder: ({ ctx }) => [...Array(ctx.numPlayers).keys()].map(k => String(k)),
     },
+    onBegin: ({ G }) => {
+      G.previousScores = {...G.scores}
+    }
   },
   ai: {
     enumerate: (G, ctx, playerID) => {
@@ -502,7 +512,6 @@ export const Qwirkle : Game<QwirkleState>= {
       if (ctx.currentPlayer !== playerID) {
         return moves
       }
-      moves.push({'move': 'endTurn'})
       if (!G.players[playerID].tilesToSwap.length) {
         for (let i = 0; i < G.cells.length ; i++) {
           for (let j = 0; j < G.cells[0].length ; j++) {
@@ -516,6 +525,9 @@ export const Qwirkle : Game<QwirkleState>= {
             })
           }
         }
+      }
+      if (!moves.length) {
+        moves.push({'move': 'endTurn'})
       }
       if (!G.turnPositions.length) {
         G.players[playerID].hand.forEach(tile => {
@@ -531,6 +543,6 @@ export const Qwirkle : Game<QwirkleState>= {
     endGame: false,
     endTurn: false,
   },
-  playerView: PlayerView.STRIP_SECRETS,
+ playerView: PlayerView.STRIP_SECRETS,
 };
 // TODO: detect when there are no valid turns end game
