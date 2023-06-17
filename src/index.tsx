@@ -6,20 +6,25 @@ import {
   Outlet,
   Link,
 } from "react-router-dom";
+import CssBaseline from '@mui/material/CssBaseline';
+import { ThemeProvider } from '@mui/material/styles';
 import './index.css';
 import Lobby from './Lobby';
 import AiApp from './AiApp';
 import reportWebVitals from './reportWebVitals';
+import theme from './theme';
+import { Container } from '@mui/material';
+import QwirkleAppBar from './AppBar';
+
 
 const AppWrapper = () => {
   return (
-    <>
-      <h1>Qwirkle</h1>
-      <span><Link to='/' >Play With Others</Link></span>
-      <span>  |  </span>
-      <span><Link to='/ai' >Play Against (a bad) AI</Link></span>
-      <Outlet />
-    </>
+    <Container disableGutters maxWidth="xl">
+      <QwirkleAppBar />
+      <Container>
+        <Outlet />
+      </Container>
+    </Container>
   )
 }
 
@@ -48,9 +53,10 @@ const root = ReactDOM.createRoot(
   document.getElementById('root') as HTMLElement
 );
 root.render(
-  <React.StrictMode>
+  <ThemeProvider theme={theme}>
+    <CssBaseline />
     <RouterProvider router={router} />
-  </React.StrictMode>
+  </ThemeProvider>
 );
 
 // If you want to start measuring performance in your app, pass a function
