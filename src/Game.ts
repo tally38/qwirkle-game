@@ -281,31 +281,36 @@ function findRowTiles(G: QwirkleState, pos: Position) : Tile[] {
 function tilesEqual(t1: Tile, t2: Tile) : boolean {
   return t1.color === t2.color && t1.shape === t2.shape
 }
-function removeTileFromHand(G: QwirkleState, playerID: string, tile: Tile) {
+
+
+function removeTileFromHand(G: QwirkleState, playerID: string, handIndex: number) {
   var hand = G.players[playerID]?.hand
   if (!hand) {
     throw new Error("Invalid playerID passed to removeTileFromHand")
   }
-  var handTile : Tile | null
-  var removeIndex : null | number = null
-  for (let i = 0 ; i < hand.length ; i++ ) {
-    handTile = hand[i]
-    if (handTile && tilesEqual(handTile, tile)) {
-      removeIndex = i
-    }
+  if (handIndex < 0 || handIndex >= 6) {
+    throw new Error("Hand index must bebetween 0 and 5; recieved: " + handIndex)
   }
-  if ( removeIndex !== null ) {
-    hand[removeIndex] = null
-  } else {
+  var handTile : Tile | null = hand[handIndex]
+  if (!handTile) {
     throw new Error("Tile not found in player's hand")
   }
+  hand[handIndex] = null
+  return handTile
 }
 
-function validTilePlacement(ctx: Ctx, G: QwirkleState, playerID: string, pos: Position, tile: Tile) {
+function validTilePlacement(ctx: Ctx, G: QwirkleState, playerID: string, pos: Position, handIndex: number) {
   var rowTiles = findRowTiles(G, pos)
   var colTiles = findColumnTiles(G, pos)
   var isTouchingAnotherTile = rowTiles.length > 0 || colTiles.length > 0
 
+  if (handIndex < 0 || handIndex > 5 ) {
+    return false
+  }
+  var tile = G.players[playerID].hand[handIndex]
+  if (!tile) {
+    return false
+  }
   if (G.cells[pos.i][pos.j]) {
     return false
   }
@@ -323,7 +328,7 @@ function validTilePlacement(ctx: Ctx, G: QwirkleState, playerID: string, pos: Po
   }
   if (!G.turnPositions.length && ctx.turn === 1) {
     var validOpeningMoves = findValidOpeningMoves(G.players[playerID].hand as Tile[])
-    if (validOpeningMoves.every( move => !move.some(t => tilesEqual(t, tile)))) {
+    if (validOpeningMoves.every( move => !move.some(t => tilesEqual(t, tile as Tile)))) {
       return false
     }
   }
@@ -422,20 +427,20 @@ export const Qwirkle : Game<QwirkleState>= {
   },
   moves: {
     // placeholder move as I work through tutorial
-    placeTile: ({ ctx, G, playerID }, pos: Position, tile: Tile) => {
+    placeTile: ({ ctx, G, playerID }, pos: Position, handIndex: number) => {
       const posCopy = {...pos}
       if (G.players[playerID].tilesToSwap.length ) {
         return INVALID_MOVE
       }
-      if (!validTilePlacement(ctx, G, playerID, posCopy, tile)) {
+      if (!validTilePlacement(ctx, G, playerID, posCopy, handIndex)) {
         return INVALID_MOVE
       }
       G.turnPositions.push(posCopy)
+      var tile = removeTileFromHand(G, playerID, handIndex)
       G.cells[posCopy.i][posCopy.j] = tile
-      removeTileFromHand(G, playerID, tile)
       extendBoardIfNeeded(G, posCopy) // this needs to be calld after pushing pos on turnPositions
     },
-    selectTileToSwap: ({ ctx, G, playerID }, tile: Tile) => {
+    selectTileToSwap: ({ ctx, G, playerID }, handIndex: number) => {
       // Only allow swapping pieces if no tiles placed on this turn
       if ( ctx.turn === 1 ) {
         return INVALID_MOVE
@@ -443,7 +448,7 @@ export const Qwirkle : Game<QwirkleState>= {
       if (G.turnPositions.length || G.bagIndex < 0 ) {
         return INVALID_MOVE
       }
-      removeTileFromHand(G, playerID, tile)
+      var tile = removeTileFromHand(G, playerID, handIndex)
       G.players[playerID].tilesToSwap.push(tile)
     },
     endTurn: {
@@ -515,11 +520,11 @@ export const Qwirkle : Game<QwirkleState>= {
       if (!G.players[playerID].tilesToSwap.length) {
         for (let i = 0; i < G.cells.length ; i++) {
           for (let j = 0; j < G.cells[0].length ; j++) {
-            G.players[playerID].hand.forEach(tile => {
+            G.players[playerID].hand.forEach((tile, index) => {
               if (tile) {
                 var pos = {i, j}
-                if (validTilePlacement(ctx, G, playerID, pos, tile)) {
-                  moves.push({ move: 'placeTile', args: [pos, tile] });
+                if (validTilePlacement(ctx, G, playerID, pos, index)) {
+                  moves.push({ move: 'placeTile', args: [pos, index] });
                 }
               }
             })
@@ -530,9 +535,9 @@ export const Qwirkle : Game<QwirkleState>= {
         moves.push({'move': 'endTurn'})
       }
       if (!G.turnPositions.length) {
-        G.players[playerID].hand.forEach(tile => {
+        G.players[playerID].hand.forEach((tile, index) => {
           if (tile && G.bagIndex >= 0) {
-            moves.push({ move: 'selectTileToSwap', args: [tile] });
+            moves.push({ move: 'selectTileToSwap', args: [index] });
           }
         })
       }      

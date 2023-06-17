@@ -7,7 +7,7 @@ import { Star, FilterVintage, ChangeHistory, Stop, Lens, Favorite } from '@mater
 
 interface PlayerHandProps {
     hand: IPlayerHand
-    callback: (tile: Tile) => VoidFunction
+    callback: (clickedTileIndex: number) => VoidFunction
     tilesToSwap: Tile[]
     isActive: boolean
 }
@@ -107,7 +107,7 @@ const PlayerHand = (props: PlayerHandProps) => {
   for (let i = 0 ; i < props.hand.length ; i ++ ) {
     tile = props.hand[i]
     if (tile) {
-      hand.push(<td key={i} style={cellStyle} onClick={props.isActive ? props.callback(tile) : doNothing} ><QwirkleTile color={tile.color} shape={tile.shape} /></td>)
+      hand.push(<td key={i} style={cellStyle} onClick={props.isActive ? props.callback(i) : doNothing} ><QwirkleTile color={tile.color} shape={tile.shape} /></td>)
     } else {
       hand.push(<td key={i} style={cellStyle} />)
     }
@@ -134,20 +134,20 @@ const PlayerHand = (props: PlayerHandProps) => {
 
 export function QwirkleBoard({ ctx, G, moves, undo, playerID, matchData, isActive } : QwirkleProps) {
   const [position, setPosition] = useState<Position | null>(null);
-  const [tile, setTile] = useState<Tile | null>(null);
+  const [handIndex, setHandIndex] = useState<number | null>(null);
 
   useEffect(() => {
-    if (position && tile) {
-      moves.placeTile(position, tile)
+    if (position && handIndex) {
+      moves.placeTile(position, handIndex)
       setPosition(null)
-      setTile(null)
+      setHandIndex(null)
     }
-  }, [position, tile, setPosition, setTile, moves]);
+  }, [position, handIndex, setPosition, setHandIndex, moves]);
   
   function onClickSwap() {
-    if (tile) {
-      moves.selectTileToSwap(tile)
-      setTile(null)
+    if (handIndex) {
+      moves.selectTileToSwap(handIndex)
+      setHandIndex(null)
     }
   }
 
@@ -155,9 +155,9 @@ export function QwirkleBoard({ ctx, G, moves, undo, playerID, matchData, isActiv
     setPosition(boardPosition)
   }
 
-  function onClickTileCallback(clickedTile: Tile) {
+  function onClickTileCallback(clickedTileIndex: number) {
     function onClickTile() {
-      setTile(clickedTile)
+      setHandIndex(clickedTileIndex)
     }
     return onClickTile
   }
