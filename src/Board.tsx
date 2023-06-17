@@ -3,7 +3,7 @@ import { BoardProps } from 'boardgame.io/react';
 import { FilteredMetadata } from 'boardgame.io';
 import { QwirkleState, IPlayerHand, Tile, Position, TileColor, TileShape } from './Game';
 import { Star, FilterVintage, ChangeHistory, Stop, Lens, Favorite } from '@material-ui/icons';
-import { TableContainer } from '@mui/material';
+import { Box, Card, CardContent, Container, TableContainer, Typography } from '@mui/material';
 
 
 interface PlayerHandProps {
@@ -12,14 +12,6 @@ interface PlayerHandProps {
     tilesToSwap: Tile[]
     isActive: boolean
     handIndex: number | null
-}
-
-interface ScoreDisplayProps {
-  scores: {
-    [key: string]: number
-  },
-  matchData?: FilteredMetadata
-
 }
 
 interface QwirkleProps extends BoardProps<QwirkleState> {}
@@ -83,20 +75,88 @@ function findPlayerName(matchData: FilteredMetadata | undefined, playerID: strin
   return playerName
 }
 
-const ScoreDisplay = (props: ScoreDisplayProps) => {
-  const {scores, matchData } = props
-  const scoreDisplays = []
+const PlayerCard = ({playerName, score, isCurrentPlayer, isClientPlayer, isWinner} : {playerName: string, score: number, isCurrentPlayer: Boolean, isClientPlayer: Boolean, isWinner: Boolean}) => {
+  const border = isWinner ? '1px solid green' : isCurrentPlayer ? '1px solid blue' : 'none';
+  return (
+    <Card sx={{
+      border,
+    }}>
+      <CardContent sx={{ minWidth: 128, padding: '4px', ":last-child": {paddingBottom: '4px'}}}>
+        <Typography variant='body2' color="text.secondary" gutterBottom>
+          <strong>Name: </strong>{playerName}
+        </Typography>
+        <Typography variant='body2' color="text.secondary" gutterBottom>
+          <strong>Score: </strong>{score}
+        </Typography>
+        <Box sx={{ minHeight: 32 }}>
+          {isCurrentPlayer && !isWinner && (
+            <Typography color='blue' variant='overline' gutterBottom>
+              {isClientPlayer ? "It's your turn" : "Now Playing"}
+            </Typography>
+          )}
+          {isWinner && (
+            <Typography color='green' variant='overline' gutterBottom>
+              Winner!
+            </Typography>
+          )}
+        </Box>
+      </CardContent>
+    </Card>
+  )
+}
+
+interface PlayersDisplayProps {
+  scores: {
+    [key: string]: number
+  },
+  matchData?: FilteredMetadata,
+  currentPlayer: string,
+  clientPlayerID: string | null,
+  gameover?: {
+    winners: string[]
+  }
+}
+
+const PlayersDisplay = (props: PlayersDisplayProps) => {
+  const {scores, matchData, currentPlayer, clientPlayerID, gameover } = props
+  const winners : string[] = !!gameover ? gameover.winners : [];
+  const playerCards = []
   for (let playerID in scores) {
-		scoreDisplays.push(
-      <div key={playerID}>{findPlayerName(matchData, playerID) + ": " + props.scores[playerID]}</div>
+		playerCards.push(
+      <PlayerCard
+        playerName={findPlayerName(matchData, playerID)}
+        score={props.scores[playerID]}
+        isCurrentPlayer={playerID === currentPlayer}
+        isClientPlayer={playerID === clientPlayerID}
+        isWinner={winners.includes(playerID)}
+      />
     )
 	}
 
   return (
-    <div>
-      <b>Scores</b>
-      {scoreDisplays}
-    </div>
+    <Container disableGutters >
+      <Typography variant='h6' color="text.secondary">
+        Players
+      </Typography>
+      <Box
+        sx={{
+          display: 'flex',
+          flexWrap: 'wrap',
+          gap: '16px',
+          alignContent: 'stretch',
+          p: 1,
+          m: 1,
+          bgcolor: 'background.paper',
+          maxWidth: 'md',
+          //height: 100,
+          borderRadius: 1,
+          margin: 0,
+          padding: "8px 0",
+        }}
+      >
+      {playerCards}
+      </Box>
+    </Container>
   )
 }
 
@@ -164,13 +224,12 @@ const BoardCells = ({G, onClickCell, isActive} : {G: QwirkleState, onClickCell: 
 }
 
 
-
 export function QwirkleBoard({ ctx, G, moves, undo, playerID, matchData, isActive } : QwirkleProps) {
   const [position, setPosition] = useState<Position | null>(null);
   const [handIndex, setHandIndex] = useState<number | null>(null);
 
   useEffect(() => {
-    if (position && handIndex) {
+    if (position && handIndex !== null) {
       moves.placeTile(position, handIndex)
       setPosition(null)
       setHandIndex(null)
@@ -195,21 +254,15 @@ export function QwirkleBoard({ ctx, G, moves, undo, playerID, matchData, isActiv
     return onClickTile
   }
 
-  let winner = <div></div>;
-  if (ctx.gameover) {
-    winner =
-      ctx.gameover.winner !== undefined ? (
-        <div id="winner">Winner: {findPlayerName(matchData, ctx.gameover.winner)}</div>
-      ) : (
-        <div id="winner">Draw!</div>
-      );
-  }
-
   return (
     <div>
-      <span><b>Current Player: </b>{findPlayerName(matchData, ctx.currentPlayer)}</span>
-      <ScoreDisplay scores={G.scores} matchData={matchData} />
-      {winner}
+      <PlayersDisplay
+        scores={G.scores}
+        matchData={matchData}
+        currentPlayer={ctx.currentPlayer}
+        clientPlayerID={playerID}
+        gameover={ctx.gameover}
+      />
       <BoardCells G={G} onClickCell={onClickCell} isActive={isActive} />
       <table id="player-dashboard">
         <tbody>
