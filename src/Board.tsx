@@ -3,6 +3,7 @@ import { BoardProps } from 'boardgame.io/react';
 import { FilteredMetadata } from 'boardgame.io';
 import { QwirkleState, IPlayerHand, Tile, Position, TileColor, TileShape } from './Game';
 import { Star, FilterVintage, ChangeHistory, Stop, Lens, Favorite } from '@material-ui/icons';
+import { TableContainer } from '@mui/material';
 
 
 interface PlayerHandProps {
@@ -10,6 +11,7 @@ interface PlayerHandProps {
     callback: (clickedTileIndex: number) => VoidFunction
     tilesToSwap: Tile[]
     isActive: boolean
+    handIndex: number | null
 }
 
 interface ScoreDisplayProps {
@@ -130,6 +132,37 @@ const PlayerHand = (props: PlayerHandProps) => {
   );
 };
 
+const BoardCells = ({G, onClickCell, isActive} : {G: QwirkleState, onClickCell: (boardPosition: Position) => void, isActive: boolean}) => {
+  let rows = [];
+  var cellTile
+  for (let i = 0; i < G.cells.length ; i++) {
+    let cells = [];
+    for (let j = 0; j < G.cells[0].length ; j++) {
+      const id = i + '-' + j;
+      cellTile = G.cells[i][j]!
+      cells.push(
+        <td key={id}>
+          {G.cells[i][j] ? (
+            <div style={cellStyle}><QwirkleTile color={cellTile.color} shape={cellTile.shape} /></div>
+          ) : (
+            <button disabled={!isActive} style={cellStyle} onClick={() => onClickCell({i, j})} />
+          )}
+        </td>
+      );
+    }
+    rows.push(<tr key={i}>{cells}</tr>);
+  }
+  return (
+    <TableContainer>
+      <table aria-label="qwirkle-board-cells">
+        <tbody>
+          {rows}
+        </tbody>
+      </table>
+    </TableContainer>
+  )
+}
+
 
 
 export function QwirkleBoard({ ctx, G, moves, undo, playerID, matchData, isActive } : QwirkleProps) {
@@ -151,7 +184,7 @@ export function QwirkleBoard({ ctx, G, moves, undo, playerID, matchData, isActiv
     }
   }
 
-  function onClickBoard(boardPosition : Position) {
+  function onClickCell(boardPosition : Position) {
     setPosition(boardPosition)
   }
 
@@ -172,34 +205,12 @@ export function QwirkleBoard({ ctx, G, moves, undo, playerID, matchData, isActiv
       );
   }
 
-  let tbody = [];
-  var cellTile 
-  for (let i = 0; i < G.cells.length ; i++) {
-    let cells = [];
-    for (let j = 0; j < G.cells[0].length ; j++) {
-      const id = i + '-' + j;
-      cellTile = G.cells[i][j]!
-      cells.push(
-        <td key={id}>
-          {G.cells[i][j] ? (
-            <div style={cellStyle}><QwirkleTile color={cellTile.color} shape={cellTile.shape} /></div>
-          ) : (
-            <button disabled={!isActive} style={cellStyle} onClick={() => onClickBoard({i, j})} />
-          )}
-        </td>
-      );
-    }
-    tbody.push(<tr key={i}>{cells}</tr>);
-  }
-
   return (
     <div>
       <span><b>Current Player: </b>{findPlayerName(matchData, ctx.currentPlayer)}</span>
       <ScoreDisplay scores={G.scores} matchData={matchData} />
       {winner}
-      <table id="board">
-        <tbody>{tbody}</tbody>
-      </table>
+      <BoardCells G={G} onClickCell={onClickCell} isActive={isActive} />
       <table id="player-dashboard">
         <tbody>
           <tr>
@@ -210,7 +221,7 @@ export function QwirkleBoard({ ctx, G, moves, undo, playerID, matchData, isActiv
               {G.bagIndex + 1}
             </td>
           </tr>
-          {playerID ? <PlayerHand isActive={isActive} hand={G.players[playerID!].hand} tilesToSwap={G.players[playerID!].tilesToSwap} callback={onClickTileCallback} /> : null }
+          {playerID ? <PlayerHand isActive={isActive} hand={G.players[playerID!].hand} tilesToSwap={G.players[playerID!].tilesToSwap} callback={onClickTileCallback} handIndex={handIndex} /> : null }
           <tr>
             <td key="action-header">
               <b>Actions</b>
