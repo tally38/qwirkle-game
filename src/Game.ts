@@ -497,7 +497,10 @@ export const Qwirkle : Game<QwirkleState>= {
             winners.push(playerID)
           }
         }
-        return winners.length > 1 ? { draw: true } : { winner: winners[0] }
+        return { winners: winners }
+      } else {
+        // player still has tiles, so game is not over
+        return
       }
     }
   },
