@@ -297,7 +297,7 @@ export function QwirkleBoard({ ctx, G, moves, undo, playerID, matchData, isActiv
   }
 
   return (
-    <div>
+    <Container disableGutters sx={{minWidth: "300px"}} >
       <PlayersDisplay
         scores={G.scores}
         matchData={matchData}
@@ -352,6 +352,6 @@ export function QwirkleBoard({ ctx, G, moves, undo, playerID, matchData, isActiv
           <TileSet isActive={isActive} tiles={G.players[playerID!].tilesToSwap} name="Tiles to Swap" />
         </Box>
       )}
-    </div>
+    </Container>
   );
 }
