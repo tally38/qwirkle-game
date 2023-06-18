@@ -5,15 +5,6 @@ import { QwirkleState, IPlayerHand, Tile, Position, TileColor, TileShape } from 
 import { Star, FilterVintage, ChangeHistory, Stop, Lens, Favorite } from '@material-ui/icons';
 import { Box, Button, Card, CardContent, Container, TableContainer, Typography } from '@mui/material';
 
-
-interface PlayerHandProps {
-    hand: IPlayerHand
-    callback: (clickedTileIndex: number) => VoidFunction
-    tilesToSwap: Tile[]
-    isActive: boolean
-    handIndex: number | null
-}
-
 interface QwirkleProps extends BoardProps<QwirkleState> {}
 
 const cellStyle = {
@@ -47,17 +38,17 @@ const QwirkleTile = ( props: QwirkleTileProps) => {
     height: '40px',
     backgroundColor: 'black',
     color: color,
-    border: '1px solid black',
     borderRadius: '5px',
     textAlign: 'center' as 'center',
     fontSize: '40px',
     fontWeight: 'bold',
     verticalAlign: 'middle',
+    lineHeight: "40px"
   };
 
 
 
-  return <div style={tileStyles}>{shapes[shape]}</div>;
+  return <Box sx={tileStyles}>{shapes[shape]}</Box>;
 };
 
 
@@ -123,6 +114,7 @@ const PlayersDisplay = (props: PlayersDisplayProps) => {
   for (let playerID in scores) {
 		playerCards.push(
       <PlayerCard
+        key={playerID}
         playerName={findPlayerName(matchData, playerID)}
         score={props.scores[playerID]}
         isCurrentPlayer={playerID === currentPlayer}
@@ -159,43 +151,71 @@ const PlayersDisplay = (props: PlayersDisplayProps) => {
   )
 }
 
-const doNothing = () => null;
+interface TileSetProps {
+  tiles: (Tile | null)[]
+  callback?: (clickedTileIndex: number) => VoidFunction
+  isActive: boolean
+  index?: number | null // index within tileset ; used for rendering
+  name: string
+}
 
-const PlayerHand = (props: PlayerHandProps) => {
-  var hand = []
-  var tilesToSwap = []
+const TileSet = (props: TileSetProps) => {
+  const { tiles, callback, isActive, index, name } = props
+  var displayTiles = []
   var tile
-  for (let i = 0 ; i < props.hand.length ; i ++ ) {
-    tile = props.hand[i]
+  for (let i = 0 ; i < tiles.length ; i ++ ) {
+    tile = tiles[i]
     if (tile) {
-      hand.push(<td key={i} style={cellStyle} onClick={props.isActive ? props.callback(i) : doNothing} ><QwirkleTile color={tile.color} shape={tile.shape} /></td>)
-    } else {
-      hand.push(<td key={i} style={cellStyle} />)
+      displayTiles.push(
+        <Box key={i} onClick={(isActive && !!callback) ? callback(i) : () => null} sx={
+          {
+            width: '50px',
+            height: '50px',
+            lineHeight: '40px',
+            textAlign: 'center' as 'center',
+            borderRadius: '5px',
+            padding: '3px',
+            backgroundColor: index === i ? 'blue' : 'white'
+          }
+        }>
+          <QwirkleTile color={tile.color} shape={tile.shape} />
+        </Box>
+      )
     }
   }
-  for (let i = 0 ; i < props.tilesToSwap.length ; i ++ ) {
-    tile = props.tilesToSwap[i]
-    tilesToSwap.push(<td key={i} style={cellStyle} ><QwirkleTile color={tile.color} shape={tile.shape} /></td>)
-  }
   return (
-    <>
-      <tr key="player-hand">
-        <td key={'player-hand'}><b>Player Hand</b></td>
-        {hand}
-      </tr>
-      <tr key="player-tiles-to-swap" style={{height: '50px'}}>
-        <td key={'tiles-to-swap'}><b>Tiles to Swap</b></td>
-        {tilesToSwap}
-      </tr>
-    </>
+    <Container disableGutters >
+      <Container  disableGutters sx={{
+        display: 'flex',
+        flexWrap: 'nowrap',
+        gap: '12px',
+        alignContent: 'left',
+        bgcolor: 'background.paper',
+      }}>
+        <Typography variant='overline' gutterBottom>
+          {name}
+        </Typography>
+      </Container>
+      <Container  disableGutters sx={{
+        display: 'flex',
+        flexWrap: 'nowrap',
+        gap: '1px',
+        alignContent: 'left',
+        bgcolor: 'background.paper',
+        minHeight: '50px',
+      }}>
+        {displayTiles}
+      </Container>
+    </Container>
   );
 };
+
 
 const BoardCells = ({G, onClickCell, isActive} : {G: QwirkleState, onClickCell: (boardPosition: Position) => void, isActive: boolean}) => {
   const cellStyle = {
     border: '1px solid #555',
-    width: '48px',
-    height: '48px',
+    width: '50px',
+    height: '50px',
     lineHeight: '25px',
     textAlign: 'center' as 'center',
     minWidth: '50px',
@@ -218,6 +238,7 @@ const BoardCells = ({G, onClickCell, isActive} : {G: QwirkleState, onClickCell: 
     }
     rows.push((
       <Box
+        key={i}
         sx={{
           display: 'flex',
           flexWrap: 'nowrap',
@@ -279,33 +300,46 @@ export function QwirkleBoard({ ctx, G, moves, undo, playerID, matchData, isActiv
         gameover={ctx.gameover}
       />
       <BoardCells G={G} onClickCell={onClickCell} isActive={isActive} />
-      <table id="player-dashboard">
-        <tbody>
-          <tr>
-            <td key="tiles-remaining">
-              <b>Tiles Remaining:</b>
-            </td>
-            <td key="undo">
-              {G.bagIndex + 1}
-            </td>
-          </tr>
-          {playerID ? <PlayerHand isActive={isActive} hand={G.players[playerID!].hand} tilesToSwap={G.players[playerID!].tilesToSwap} callback={onClickTileCallback} handIndex={handIndex} /> : null }
-          <tr>
-            <td key="action-header">
-              <b>Actions</b>
-            </td>
-            <td key="undo">
-              <button disabled={!isActive} style={cellStyle} onClick={ () => undo() }> undo </button>
-            </td>
-            <td key="end-turn">
-              <button disabled={!isActive} style={cellStyle} onClick={() => moves.endTurn()}>end turn</button>
-            </td>
-            <td key="swap">
-              <button disabled={!isActive} style={cellStyle} onClick={() => onClickSwap()}>swap</button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+      { playerID && (
+        <Container disableGutters>
+          <TileSet isActive={isActive} tiles={G.players[playerID!].hand} callback={onClickTileCallback} index={handIndex} name="Your Tiles" />
+          <TileSet isActive={isActive} tiles={G.players[playerID!].tilesToSwap} name="Tiles to Swap" />     
+          <Container  disableGutters sx={{
+            display: 'flex',
+            flexWrap: 'nowrap',
+            gap: '1px',
+            alignContent: 'left',
+            bgcolor: 'background.paper',
+            minHeight: '50px',
+          }}>
+            <Container sx={{maxWidth: "300px"}} disableGutters>
+              <Typography variant='overline' gutterBottom>
+                Actions
+              </Typography>
+              <Container  disableGutters sx={{
+                display: 'flex',
+                flexWrap: 'nowrap',
+                gap: '4px',
+                alignContent: 'left',
+                bgcolor: 'background.paper',
+                minHeight: '50px',
+              }}>
+                  <Button variant="contained" disabled={!isActive} onClick={() => undo()}> Undo </Button>
+                  <Button variant="contained" disabled={!isActive} onClick={() => moves.endTurn()}>End Turn</Button>
+                  <Button variant="contained" disabled={!isActive} onClick={() => onClickSwap()}>Swap</Button>
+              </Container>
+            </Container>
+            <Container disableGutters>
+              <Typography variant='overline' gutterBottom>
+                Tiles Remaining
+              </Typography>
+              <Typography variant='h6' gutterBottom>
+                {G.bagIndex + 1}
+              </Typography>
+            </Container>
+          </Container>
+        </Container>
+      )}
     </div>
   );
 }
