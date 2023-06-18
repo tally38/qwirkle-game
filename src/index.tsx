@@ -19,7 +19,7 @@ import QwirkleAppBar from './AppBar';
 
 const AppWrapper = () => {
   return (
-    <Container disableGutters sx={{minWidth: '450px'}} maxWidth="xl">
+    <Container disableGutters maxWidth="xl">
       <QwirkleAppBar />
       <Container>
         <Outlet />

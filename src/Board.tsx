@@ -72,20 +72,20 @@ const PlayerCard = ({playerName, score, isCurrentPlayer, isClientPlayer, isWinne
       border,
     }}>
       <CardContent sx={{ minWidth: 128, padding: '4px', ":last-child": {paddingBottom: '4px'}}}>
-        <Typography variant='body2' color="text.secondary" gutterBottom>
+        <Typography variant='body2' color="text.secondary" >
           <strong>Name: </strong>{playerName}
         </Typography>
-        <Typography variant='body2' color="text.secondary" gutterBottom>
+        <Typography variant='body2' color="text.secondary" >
           <strong>Score: </strong>{score}
         </Typography>
         <Box sx={{ minHeight: 32 }}>
           {isCurrentPlayer && !isWinner && (
-            <Typography color='blue' variant='overline' gutterBottom>
+            <Typography color='blue' variant='overline' >
               {isClientPlayer ? "It's your turn" : "Now Playing"}
             </Typography>
           )}
           {isWinner && (
-            <Typography color='green' variant='overline' gutterBottom>
+            <Typography color='green' variant='overline' >
               Winner!
             </Typography>
           )}
@@ -126,7 +126,7 @@ const PlayersDisplay = (props: PlayersDisplayProps) => {
 
   return (
     <Container disableGutters >
-      <Typography variant='overline' color="text.secondary">
+      <Typography variant='h6' color="text.secondary">
         Players
       </Typography>
       <Box
@@ -175,7 +175,7 @@ const TileSet = (props: TileSetProps) => {
             textAlign: 'center' as 'center',
             borderRadius: '5px',
             padding: '3px',
-            backgroundColor: index === i ? 'blue' : 'white'
+            backgroundColor: index === i ? 'blue' : 'white',
           }
         }>
           <QwirkleTile color={tile.color} shape={tile.shape} />
@@ -185,20 +185,12 @@ const TileSet = (props: TileSetProps) => {
   }
   return (
     <Container disableGutters >
+      <Typography variant='h6' >
+        {name}
+      </Typography>
       <Container  disableGutters sx={{
         display: 'flex',
-        flexWrap: 'nowrap',
-        gap: '12px',
-        alignContent: 'left',
-        bgcolor: 'background.paper',
-      }}>
-        <Typography variant='overline' gutterBottom>
-          {name}
-        </Typography>
-      </Container>
-      <Container  disableGutters sx={{
-        display: 'flex',
-        flexWrap: 'nowrap',
+        flexWrap: 'wrap',
         gap: '1px',
         alignContent: 'left',
         bgcolor: 'background.paper',
@@ -253,9 +245,22 @@ const BoardCells = ({G, onClickCell, isActive} : {G: QwirkleState, onClickCell: 
     ));
   }
   return (
-    <Container disableGutters >
-      {rows}
-    </Container>
+    <Box>
+      <Typography variant='h6'>
+        Board
+      </Typography>
+      <Box sx={{
+        maxHeight: '50vh',
+        overflow: 'auto',
+        padding: "4px",
+        border: '1px solid #555',
+        maxWidth: "sm",
+      }}>
+        <Box >
+          {rows}
+        </Box>
+      </Box>
+    </Box>
   )
 }
 
@@ -301,19 +306,23 @@ export function QwirkleBoard({ ctx, G, moves, undo, playerID, matchData, isActiv
       />
       <BoardCells G={G} onClickCell={onClickCell} isActive={isActive} />
       { playerID && (
-        <Container disableGutters>
-          <TileSet isActive={isActive} tiles={G.players[playerID!].hand} callback={onClickTileCallback} index={handIndex} name="Your Tiles" />
-          <TileSet isActive={isActive} tiles={G.players[playerID!].tilesToSwap} name="Tiles to Swap" />     
+        <Box sx={{
+          maxWidth: "sm",
+          alignContent: "left",
+          gap: "8px",
+          display: 'flex',
+          flexDirection: 'column',
+        }} >
           <Container  disableGutters sx={{
             display: 'flex',
             flexWrap: 'nowrap',
-            gap: '1px',
-            alignContent: 'left',
+            gap: '8px',
             bgcolor: 'background.paper',
             minHeight: '50px',
+            justifyContent: "space-between",
           }}>
-            <Container sx={{maxWidth: "300px"}} disableGutters>
-              <Typography variant='overline' gutterBottom>
+            <Box sx={{ alignContent: "left" }} >
+              <Typography variant='h6'>
                 Actions
               </Typography>
               <Container  disableGutters sx={{
@@ -324,21 +333,23 @@ export function QwirkleBoard({ ctx, G, moves, undo, playerID, matchData, isActiv
                 bgcolor: 'background.paper',
                 minHeight: '50px',
               }}>
-                  <Button variant="contained" disabled={!isActive} onClick={() => undo()}> Undo </Button>
-                  <Button variant="contained" disabled={!isActive} onClick={() => moves.endTurn()}>End Turn</Button>
-                  <Button variant="contained" disabled={!isActive} onClick={() => onClickSwap()}>Swap</Button>
+                  <Button size="small" variant="contained" disabled={!isActive} onClick={() => undo()}> Undo </Button>
+                  <Button size="small" variant="contained" disabled={!isActive} onClick={() => moves.endTurn()}>End Turn</Button>
+                  <Button size="small" variant="contained" disabled={!isActive} onClick={() => onClickSwap()}>Swap</Button>
               </Container>
-            </Container>
-            <Container disableGutters>
-              <Typography variant='overline' gutterBottom>
+            </Box>
+            <Box >
+              <Typography variant='h6' align="right" >
                 Tiles Remaining
               </Typography>
-              <Typography variant='h6' gutterBottom>
+              <Typography variant='body1' align="right" >
                 {G.bagIndex + 1}
               </Typography>
-            </Container>
+            </Box>
           </Container>
-        </Container>
+          <TileSet isActive={isActive} tiles={G.players[playerID!].hand} callback={onClickTileCallback} index={handIndex} name="Your Tiles" />
+          <TileSet isActive={isActive} tiles={G.players[playerID!].tilesToSwap} name="Tiles to Swap" />
+        </Box>
       )}
     </div>
   );
