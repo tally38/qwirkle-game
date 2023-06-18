@@ -157,10 +157,11 @@ interface TileSetProps {
   isActive: boolean
   index?: number | null // index within tileset ; used for rendering
   name: string
+  alignRight?: boolean
 }
 
 const TileSet = (props: TileSetProps) => {
-  const { tiles, callback, isActive, index, name } = props
+  const { tiles, callback, isActive, index, name, alignRight = false} = props
   var displayTiles = []
   var tile
   for (let i = 0 ; i < tiles.length ; i ++ ) {
@@ -184,21 +185,21 @@ const TileSet = (props: TileSetProps) => {
     }
   }
   return (
-    <Container disableGutters >
-      <Typography variant='h6' >
+    <Box sx={{ alignContent: alignRight ? 'right' : 'left' }} >
+      <Typography variant='h6' align={alignRight ? 'right' : 'left'} >
         {name}
       </Typography>
       <Container  disableGutters sx={{
         display: 'flex',
         flexWrap: 'wrap',
         gap: '1px',
-        alignContent: 'left',
+        justifyContent: alignRight ? 'flex-end' : 'flex-start',
         bgcolor: 'background.paper',
         minHeight: '50px',
       }}>
         {displayTiles}
       </Container>
-    </Container>
+    </Box>
   );
 };
 
