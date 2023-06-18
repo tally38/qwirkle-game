@@ -3,7 +3,7 @@ import { BoardProps } from 'boardgame.io/react';
 import { FilteredMetadata } from 'boardgame.io';
 import { QwirkleState, IPlayerHand, Tile, Position, TileColor, TileShape } from './Game';
 import { Star, FilterVintage, ChangeHistory, Stop, Lens, Favorite } from '@material-ui/icons';
-import { Box, Card, CardContent, Container, TableContainer, Typography } from '@mui/material';
+import { Box, Button, Card, CardContent, Container, TableContainer, Typography } from '@mui/material';
 
 
 interface PlayerHandProps {
@@ -49,7 +49,6 @@ const QwirkleTile = ( props: QwirkleTileProps) => {
     color: color,
     border: '1px solid black',
     borderRadius: '5px',
-    margin: '5px',
     textAlign: 'center' as 'center',
     fontSize: '40px',
     fontWeight: 'bold',
@@ -135,7 +134,7 @@ const PlayersDisplay = (props: PlayersDisplayProps) => {
 
   return (
     <Container disableGutters >
-      <Typography variant='h6' color="text.secondary">
+      <Typography variant='overline' color="text.secondary">
         Players
       </Typography>
       <Box
@@ -193,33 +192,49 @@ const PlayerHand = (props: PlayerHandProps) => {
 };
 
 const BoardCells = ({G, onClickCell, isActive} : {G: QwirkleState, onClickCell: (boardPosition: Position) => void, isActive: boolean}) => {
+  const cellStyle = {
+    border: '1px solid #555',
+    width: '48px',
+    height: '48px',
+    lineHeight: '25px',
+    textAlign: 'center' as 'center',
+    minWidth: '50px',
+    borderRadius: '0px',
+    padding: '4px',
+    margin: '1px',
+  };
   let rows = [];
   var cellTile
   for (let i = 0; i < G.cells.length ; i++) {
-    let cells = [];
+    let rowCells = [];
     for (let j = 0; j < G.cells[0].length ; j++) {
       const id = i + '-' + j;
       cellTile = G.cells[i][j]!
-      cells.push(
-        <td key={id}>
-          {G.cells[i][j] ? (
-            <div style={cellStyle}><QwirkleTile color={cellTile.color} shape={cellTile.shape} /></div>
-          ) : (
-            <button disabled={!isActive} style={cellStyle} onClick={() => onClickCell({i, j})} />
-          )}
-        </td>
-      );
+      if (!!cellTile) {
+        rowCells.push(<Box key={id} style={cellStyle}><QwirkleTile color={cellTile.color} shape={cellTile.shape} /></Box>)
+      } else {
+        rowCells.push(<Button key={id} disabled={!isActive} sx={cellStyle} onClick={() => onClickCell({i, j})} />)
+      }
     }
-    rows.push(<tr key={i}>{cells}</tr>);
+    rows.push((
+      <Box
+        sx={{
+          display: 'flex',
+          flexWrap: 'nowrap',
+          gap: '0px',
+          alignContent: 'left',
+          bgcolor: 'background.paper',
+          maxWidth: 'md',
+        }}
+      >
+        {rowCells}
+      </Box>
+    ));
   }
   return (
-    <TableContainer>
-      <table aria-label="qwirkle-board-cells">
-        <tbody>
-          {rows}
-        </tbody>
-      </table>
-    </TableContainer>
+    <Container disableGutters >
+      {rows}
+    </Container>
   )
 }
 
