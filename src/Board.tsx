@@ -278,7 +278,7 @@ export function QwirkleBoard({ ctx, G, moves, undo, playerID, matchData, isActiv
   }, [position, handIndex, setPosition, setHandIndex, moves]);
   
   function onClickSwap() {
-    if (handIndex) {
+    if (handIndex !== null) {
       moves.selectTileToSwap(handIndex)
       setHandIndex(null)
     }
