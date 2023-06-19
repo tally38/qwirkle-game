@@ -12,6 +12,13 @@ interface QwirkleTileProps {
   shape: TileShape,
 }
 
+const PLAYER_COLORS : {[key: string]: string} = {
+  '0': 'blue',
+  '1': 'green',
+  '2': 'red',
+  '3': 'orange',
+}
+
 const QwirkleTile = ( props: QwirkleTileProps) => {
   const {color, shape} = props
 
@@ -194,7 +201,8 @@ const TileSet = (props: TileSetProps) => {
 };
 
 
-const BoardCells = ({G, onClickCell, isActive} : {G: QwirkleState, onClickCell: (boardPosition: Position) => void, isActive: boolean}) => {
+
+const BoardCells = ({G, currentPlayer, onClickCell, isActive} : {G: QwirkleState, currentPlayer: string, onClickCell: (boardPosition: Position) => void, isActive: boolean}) => {
   const cellStyle = {
     border: '1px solid #555',
     width: '50px',
@@ -206,15 +214,36 @@ const BoardCells = ({G, onClickCell, isActive} : {G: QwirkleState, onClickCell: 
     padding: '4px',
     margin: '1px',
   };
+
+  const positionColors: { [key: number]: {[key: number]: string}} = {}
+  for (let playerID in G.previousMoves) {
+    if (currentPlayer !== playerID ) {
+      G.previousMoves[playerID].forEach(p => {
+        if (!positionColors[p.i]) {
+          positionColors[p.i] = {}
+        }
+        positionColors[p.i][p.j] = PLAYER_COLORS[playerID]
+      })
+    }
+    G.turnPositions.forEach(p => {
+      if (!positionColors[p.i]) {
+        positionColors[p.i] = {}
+      }
+      positionColors[p.i][p.j] = PLAYER_COLORS[currentPlayer]
+    })
+  }
+
   let rows = [];
   var cellTile
+  let cellColor : string
   for (let i = 0; i < G.cells.length ; i++) {
     let rowCells = [];
     for (let j = 0; j < G.cells[0].length ; j++) {
       const id = i + '-' + j;
       cellTile = G.cells[i][j]!
       if (!!cellTile) {
-        rowCells.push(<Box key={id} style={cellStyle}><QwirkleTile color={cellTile.color} shape={cellTile.shape} /></Box>)
+        cellColor = !!positionColors[i] && positionColors[i][j]
+        rowCells.push(<Box key={id} sx={{...cellStyle, background: cellColor}}><QwirkleTile color={cellTile.color} shape={cellTile.shape} /></Box>)
       } else {
         rowCells.push(<Button key={id} disabled={!isActive} sx={cellStyle} onClick={() => onClickCell({i, j})} />)
       }
@@ -294,7 +323,7 @@ export function QwirkleBoard({ ctx, G, moves, undo, playerID, matchData, isActiv
         clientPlayerID={playerID}
         gameover={ctx.gameover}
       />
-      <BoardCells G={G} onClickCell={onClickCell} isActive={isActive} />
+      <BoardCells G={G} currentPlayer={ctx.currentPlayer} onClickCell={onClickCell} isActive={isActive} />
       { playerID && (
         <Box sx={{
           maxWidth: "sm",

@@ -50,6 +50,9 @@ export interface QwirkleState {
   turnPositions: Position[],
   previousScores: {
     [key: string]: number
+  },
+  previousMoves: {
+    [key: string]: Position[]
   }
 }
 
@@ -130,6 +133,11 @@ function extendBoardIfNeeded(G: QwirkleState, pos: Position) {
     G.turnPositions.forEach(p => {
       p.j++
     })
+    for (let playerID in G.previousMoves) {
+      G.previousMoves[playerID].forEach(p => {
+        p.j++
+      })
+    }
   }
   if ( pos.j === G.cells[0].length - 1) {
     for (let i = 0 ; i < G.cells.length ; i++) {
@@ -410,6 +418,9 @@ export const Qwirkle : Game<QwirkleState>= {
     var previousScores : {
       [key: string]: number
     } = {}
+    var previousMoves : {
+      [key: string]: Position[]
+    } = {}
     for (i = 0 ; i < ctx.numPlayers ; i++) {
       players[String(i)] = {
         hand: Array(6).fill(null),
@@ -421,7 +432,7 @@ export const Qwirkle : Game<QwirkleState>= {
     var initialBoardSize = 5
     var cells = Array(initialBoardSize).fill(Array(initialBoardSize).fill(null))
 
-    var G : QwirkleState = {secret: {bag}, bagIndex, players, cells, scores, turnPositions: [], previousScores}
+    var G : QwirkleState = {secret: {bag}, bagIndex, players, cells, scores, turnPositions: [], previousScores, previousMoves}
     fillAllHands(G)
     return G
   },
@@ -474,6 +485,7 @@ export const Qwirkle : Game<QwirkleState>= {
         if (G.players[playerID].hand.every((val) => val === null)) {
           G.scores[playerID] += 6
         }
+        G.previousMoves[playerID] = [...G.turnPositions]
         G.turnPositions = []
         fillHand(G, playerID)
         events.endTurn()
