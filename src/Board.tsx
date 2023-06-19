@@ -13,8 +13,8 @@ interface QwirkleTileProps {
 }
 
 const PLAYER_COLORS : {[key: string]: string} = {
-  '0': 'blue',
-  '1': 'green',
+  '0': 'green',
+  '1': 'blue',
   '2': 'red',
   '3': 'orange',
 }
@@ -168,10 +168,11 @@ interface TileSetProps {
   index?: number | null // index within tileset ; used for rendering
   name: string
   alignRight?: boolean
+  highlightColor?: string
 }
 
 const TileSet = (props: TileSetProps) => {
-  const { tiles, callback, isActive, index, name, alignRight = false} = props
+  const { tiles, callback, isActive, index, name, alignRight = false, highlightColor = 'blue' } = props
   var displayTiles = []
   var tile
   for (let i = 0 ; i < tiles.length ; i ++ ) {
@@ -186,7 +187,7 @@ const TileSet = (props: TileSetProps) => {
             textAlign: 'center' as 'center',
             borderRadius: '5px',
             padding: '3px',
-            backgroundColor: index === i ? 'blue' : 'white',
+            backgroundColor: index === i ? highlightColor : 'white',
           }
         }>
           <QwirkleTile color={tile.color} shape={tile.shape} />
@@ -380,7 +381,7 @@ export function QwirkleBoard({ ctx, G, moves, undo, playerID, matchData, isActiv
               </Typography>
             </Box>
           </Container>
-          <TileSet isActive={isActive} tiles={G.players[playerID!].hand} callback={onClickTileCallback} index={handIndex} name="Your Tiles" />
+          <TileSet isActive={isActive} tiles={G.players[playerID!].hand} callback={onClickTileCallback} index={handIndex} highlightColor={PLAYER_COLORS[playerID]} name="Your Tiles" />
           <TileSet isActive={isActive} tiles={G.players[playerID!].tilesToSwap} name="Tiles to Swap" />
         </Box>
       )}
