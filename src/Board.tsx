@@ -3,7 +3,7 @@ import { BoardProps } from 'boardgame.io/react';
 import { FilteredMetadata } from 'boardgame.io';
 import { QwirkleState, Tile, Position, TileColor, TileShape } from './Game';
 import { Star, FilterVintage, ChangeHistory, Stop, Lens, Favorite } from '@material-ui/icons';
-import { Box, Button, Card, CardContent, Container, Paper, Typography } from '@mui/material';
+import { Avatar, Box, Button, Card, CardContent, CardHeader, Container, Paper, Typography } from '@mui/material';
 
 interface QwirkleProps extends BoardProps<QwirkleState> {}
 
@@ -62,7 +62,7 @@ function findPlayerName(matchData: FilteredMetadata | undefined, playerID: strin
   return playerName
 }
 
-const PlayerCard = ({playerName, score, isCurrentPlayer, isClientPlayer, isWinner} : {playerName: string, score: number, isCurrentPlayer: Boolean, isClientPlayer: Boolean, isWinner: Boolean}) => {
+const PlayerCard = ({playerName, score, isCurrentPlayer, isClientPlayer, isWinner, color, remainingTiles} : {playerName: string, score: number, isCurrentPlayer: Boolean, isClientPlayer: Boolean, isWinner: Boolean, color: string, remainingTiles?: number}) => {
   // TODO: show number of remaining tiles for each player
   // TODO: show player color (that corresponds with colors on board when placing tiles)
   const border = isWinner ? '1px solid green' : isCurrentPlayer ? '1px solid blue' : 'none';
@@ -71,13 +71,19 @@ const PlayerCard = ({playerName, score, isCurrentPlayer, isClientPlayer, isWinne
       border,
     }}>
       <CardContent sx={{ minWidth: 128, padding: '4px', ":last-child": {paddingBottom: '4px'}}}>
-        <Typography variant='body2' color="text.secondary" >
-          <strong>Name: </strong>{playerName}
-        </Typography>
-        <Typography variant='body2' color="text.secondary" >
-          <strong>Score: </strong>{score}
-        </Typography>
-        <Box sx={{ minHeight: 32 }}>
+        <CardHeader
+          avatar={<>
+            <Avatar sx={{ bgcolor: color, width: 24, height: 24 }} variant='rounded' />
+            {remainingTiles !== undefined && <Avatar sx={{ bgcolor: 'black', marginLeft: '4px', width: 24, height: 24 }} variant='rounded'>{remainingTiles}</Avatar>}
+          </>}
+          title={playerName}
+          subheader={<><strong>Score: </strong>{score}</>}
+          sx={{padding: "4px"}}
+        />
+        <Box sx={{
+          minHeight: 32,
+          padding: '4px',
+        }}>
           {isCurrentPlayer && !isWinner && (
             <Typography color='blue' variant='overline' >
               {isClientPlayer ? "It's your turn" : "Now Playing"}
@@ -103,11 +109,14 @@ interface PlayersDisplayProps {
   clientPlayerID: string | null,
   gameover?: {
     winners: string[]
-  }
+  },
+  remainingTiles?: {
+    [key: string]: number
+  },
 }
 
 const PlayersDisplay = (props: PlayersDisplayProps) => {
-  const {scores, matchData, currentPlayer, clientPlayerID, gameover } = props
+  const {scores, matchData, currentPlayer, clientPlayerID, gameover, remainingTiles } = props
   const winners : string[] = !!gameover ? gameover.winners : [];
   const playerCards = []
   for (let playerID in scores) {
@@ -119,6 +128,8 @@ const PlayersDisplay = (props: PlayersDisplayProps) => {
         isCurrentPlayer={playerID === currentPlayer}
         isClientPlayer={playerID === clientPlayerID}
         isWinner={winners.includes(playerID)}
+        color={PLAYER_COLORS[playerID]}
+        remainingTiles={remainingTiles ? remainingTiles[playerID] : undefined }
       />
     )
 	}
@@ -324,6 +335,7 @@ export function QwirkleBoard({ ctx, G, moves, undo, playerID, matchData, isActiv
         currentPlayer={ctx.currentPlayer}
         clientPlayerID={playerID}
         gameover={ctx.gameover}
+        remainingTiles={G.bagIndex < 0 ? G.remainingTiles: undefined}
       />
       <BoardCells G={G} currentPlayer={ctx.currentPlayer} onClickCell={onClickCell} isActive={isActive} />
       { playerID && (

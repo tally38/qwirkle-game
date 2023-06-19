@@ -53,7 +53,10 @@ export interface QwirkleState {
   },
   previousMoves: {
     [key: string]: Position[]
-  }
+  },
+  remainingTiles: {
+    [key: string]: number
+  },
 }
 
 function shuffle(array: any[], lastIndex: number) {
@@ -421,6 +424,9 @@ export const Qwirkle : Game<QwirkleState>= {
     var previousMoves : {
       [key: string]: Position[]
     } = {}
+    var remainingTiles : {
+      [key: string]: number
+    } = {}
     for (i = 0 ; i < ctx.numPlayers ; i++) {
       players[String(i)] = {
         hand: Array(6).fill(null),
@@ -428,11 +434,12 @@ export const Qwirkle : Game<QwirkleState>= {
       }
       scores[String(i)] = 0
       previousScores[String(i)] = 0
+      remainingTiles[String(i)] = 6
     }
     var initialBoardSize = 5
     var cells = Array(initialBoardSize).fill(Array(initialBoardSize).fill(null))
 
-    var G : QwirkleState = {secret: {bag}, bagIndex, players, cells, scores, turnPositions: [], previousScores, previousMoves}
+    var G : QwirkleState = {secret: {bag}, bagIndex, players, cells, scores, turnPositions: [], previousScores, previousMoves, remainingTiles}
     fillAllHands(G)
     return G
   },
@@ -489,6 +496,7 @@ export const Qwirkle : Game<QwirkleState>= {
         G.turnPositions = []
         fillHand(G, playerID)
         events.endTurn()
+        G.remainingTiles[playerID] = G.players[playerID].hand.filter(t => t !== null).length
       },
       client: false,
     }
