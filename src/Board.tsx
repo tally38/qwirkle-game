@@ -1,19 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { BoardProps } from 'boardgame.io/react';
 import { FilteredMetadata } from 'boardgame.io';
-import { QwirkleState, IPlayerHand, Tile, Position, TileColor, TileShape } from './Game';
+import { QwirkleState, Tile, Position, TileColor, TileShape } from './Game';
 import { Star, FilterVintage, ChangeHistory, Stop, Lens, Favorite } from '@material-ui/icons';
-import { Box, Button, Card, CardContent, Container, TableContainer, Typography } from '@mui/material';
+import { Box, Button, Card, CardContent, Container, Paper, Typography } from '@mui/material';
 
 interface QwirkleProps extends BoardProps<QwirkleState> {}
-
-const cellStyle = {
-  border: '1px solid #555',
-  width: '50px',
-  height: '50px',
-  lineHeight: '25px',
-  textAlign: 'center' as 'center',
-};
 
 interface QwirkleTileProps {
   color: TileColor,
@@ -45,8 +37,6 @@ const QwirkleTile = ( props: QwirkleTileProps) => {
     verticalAlign: 'middle',
     lineHeight: "40px"
   };
-
-
 
   return <Box sx={tileStyles}>{shapes[shape]}</Box>;
 };
@@ -250,17 +240,16 @@ const BoardCells = ({G, onClickCell, isActive} : {G: QwirkleState, onClickCell: 
       <Typography variant='h6'>
         Board
       </Typography>
-      <Box sx={{
-        maxHeight: '50vh',
+      <Paper elevation={4} sx={{
+        maxHeight: '70vh',
         overflow: 'auto',
         padding: "4px",
-        border: '1px solid #555',
-        maxWidth: "sm",
+        marginBotton: '8px',
+        display: 'inline-block',
+        maxWidth: '100%'
       }}>
-        <Box >
-          {rows}
-        </Box>
-      </Box>
+        {rows}
+      </Paper>
     </Box>
   )
 }
@@ -297,7 +286,7 @@ export function QwirkleBoard({ ctx, G, moves, undo, playerID, matchData, isActiv
   }
 
   return (
-    <Container disableGutters sx={{minWidth: "300px"}} >
+    <Container disableGutters sx={{minWidth: "300px", marginLeft: 0 }} >
       <PlayersDisplay
         scores={G.scores}
         matchData={matchData}
