@@ -571,6 +571,8 @@ export const Qwirkle : Game<QwirkleState>= {
     endGame: false,
     endTurn: false,
   },
- playerView: PlayerView.STRIP_SECRETS,
+  playerView: PlayerView.STRIP_SECRETS,
+  minPlayers: 2,
+  maxPlayers: 4,
 };
 // TODO: detect when there are no valid turns end game

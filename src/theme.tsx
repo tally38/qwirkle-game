@@ -24,6 +24,11 @@ const theme = createTheme({
         LinkComponent: LinkBehavior,
       },
     },
+    MuiButton: {
+      defaultProps: {
+        variant: 'contained',
+      },
+    },
   },
 });
 

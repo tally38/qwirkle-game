@@ -4,12 +4,11 @@ import {
   createBrowserRouter,
   RouterProvider,
   Outlet,
-  Link,
 } from "react-router-dom";
 import CssBaseline from '@mui/material/CssBaseline';
 import { ThemeProvider } from '@mui/material/styles';
 import './index.css';
-import Lobby from './Lobby';
+import Lobby from './Lobby/Lobby';
 import AiApp from './AiApp';
 import reportWebVitals from './reportWebVitals';
 import theme from './theme';

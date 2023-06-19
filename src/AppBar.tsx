@@ -99,6 +99,7 @@ function QwirkleAppBar() {
             {Object.keys(pages).map((page) => (
               <Button
                 key={page}
+                variant='text'
                 onClick={handleCloseNavMenu}
                 sx={{ my: 2, color: 'white', display: 'block' }}
                 href={pages[page]}

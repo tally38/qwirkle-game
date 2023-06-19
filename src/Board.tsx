@@ -259,7 +259,7 @@ const BoardCells = ({G, currentPlayer, onClickCell, isActive} : {G: QwirkleState
         cellColor = !!positionColors[i] && positionColors[i][j]
         rowCells.push(<Box key={id} sx={{...cellStyle, background: cellColor}}><QwirkleTile color={cellTile.color} shape={cellTile.shape} /></Box>)
       } else {
-        rowCells.push(<Button key={id} disabled={!isActive} sx={cellStyle} onClick={() => onClickCell({i, j})} />)
+        rowCells.push(<Button variant='text' key={id} disabled={!isActive} sx={cellStyle} onClick={() => onClickCell({i, j})} />)
       }
     }
     rows.push((
