@@ -21,9 +21,7 @@ const AppWrapper = () => {
   return (
     <Container disableGutters sx={{minWidth: "340px"}} maxWidth="xl">
       <QwirkleAppBar />
-      <Container>
-        <Outlet />
-      </Container>
+      <Outlet />
     </Container>
   )
 }

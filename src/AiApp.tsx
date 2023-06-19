@@ -4,6 +4,7 @@ import { Local } from 'boardgame.io/multiplayer';
 import { createQwirkleBot } from './qwirkleBot';
 import { Qwirkle } from './Game';
 import { QwirkleBoard } from './Board';
+import { Container } from '@mui/material';
 
 const LocalApp = Client({
   game: Qwirkle,
@@ -15,9 +16,9 @@ const LocalApp = Client({
 
 const AiApp = () => {
   return (
-    <div>
+    <Container>
       <LocalApp playerID="0" matchID="advanced-ai" />
-    </div>
+    </Container>
   );
 };
 
