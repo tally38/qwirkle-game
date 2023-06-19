@@ -284,7 +284,7 @@ const BoardCells = ({G, currentPlayer, onClickCell, isActive} : {G: QwirkleState
         Board
       </Typography>
       <Paper elevation={4} sx={{
-        maxHeight: '70vh',
+        maxHeight: '60vh',
         overflow: 'auto',
         padding: "4px",
         marginBotton: '8px',
