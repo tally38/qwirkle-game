@@ -63,6 +63,8 @@ function findPlayerName(matchData: FilteredMetadata | undefined, playerID: strin
 }
 
 const PlayerCard = ({playerName, score, isCurrentPlayer, isClientPlayer, isWinner} : {playerName: string, score: number, isCurrentPlayer: Boolean, isClientPlayer: Boolean, isWinner: Boolean}) => {
+  // TODO: show number of remaining tiles for each player
+  // TODO: show player color (that corresponds with colors on board when placing tiles)
   const border = isWinner ? '1px solid green' : isCurrentPlayer ? '1px solid blue' : 'none';
   return (
     <Card sx={{
