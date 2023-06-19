@@ -125,7 +125,7 @@ const PlayersDisplay = (props: PlayersDisplayProps) => {
         key={playerID}
         playerName={findPlayerName(matchData, playerID)}
         score={props.scores[playerID]}
-        isCurrentPlayer={playerID === currentPlayer}
+        isCurrentPlayer={!gameover && playerID === currentPlayer}
         isClientPlayer={playerID === clientPlayerID}
         isWinner={winners.includes(playerID)}
         color={PLAYER_COLORS[playerID]}
