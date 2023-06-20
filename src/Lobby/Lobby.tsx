@@ -8,7 +8,7 @@ import { LobbyAPI } from 'boardgame.io';
 import LobbyLoginForm from './LobbyLoginForm';
 import LobbyCreateMatchForm from './LobbyCreateMatchForm';
 import LobbyMatchInstance, { MatchOpts } from './MatchInstance';
-import { Box, Button, Container, Table, TableBody, Typography } from '@mui/material';
+import { Box, Button, Container, Paper, Table, TableBody, TableContainer, Typography } from '@mui/material';
 
 const { protocol, hostname } = window.location;
 var { port } = window.location;
@@ -103,30 +103,30 @@ const LobbyComponent : React.FC<LobbyComponentProps> = (props) => {
       )}
       {phase === LobbyPhases.LIST && (
         <Box sx={{display: 'flex', flexDirection: 'column', gap: '32px'}} >
-          <Typography variant='h3' >Welcome, {playerName}</Typography>
+          <Typography variant='h4' >Welcome, {playerName}</Typography>
           <div id="match-creation">
-            <Typography variant='h6' >Create a match: </Typography>
+            <Typography variant='h6' ><strong>Create a match</strong></Typography>
             <LobbyCreateMatchForm
               games={gameComponents}
               createMatch={handleCreateMatch}
             />
           </div>
           <div id="join-matches">
-            <Typography variant='h6' >Join a match: </Typography>
-            <Button onClick={handleRefreshMatches}>
+            <Typography variant='h6' ><strong>Join a match</strong></Typography>
+            <Button sx={{margin: "4px 0px" }} onClick={handleRefreshMatches}>
               Refresh Matches
             </Button>
-            <div id="instances">
-              <Table>
+            <TableContainer sx={{margin: '8px 0px'}} component={Paper}>
+              <Table size='small' >
                 <TableBody>
                   {renderMatches(matches, playerName)}
                 </TableBody>
               </Table>
-              <span>
-                {errorMsg}
-                <br />
-              </span>
-            </div>
+            </TableContainer>
+            <span>
+              {errorMsg}
+              <br />
+            </span>
             <p>
               Matches that become empty are automatically deleted.
             </p>

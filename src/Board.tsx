@@ -329,7 +329,7 @@ export function QwirkleBoard({ ctx, G, moves, undo, playerID, matchData, isActiv
   }
 
   return (
-    <Container disableGutters sx={{minWidth: "300px", marginLeft: 0 }} >
+    <Container disableGutters sx={{minWidth: "300px", margin: "16px 0px" }} >
       <PlayersDisplay
         scores={G.scores}
         matchData={matchData}
@@ -347,40 +347,28 @@ export function QwirkleBoard({ ctx, G, moves, undo, playerID, matchData, isActiv
           display: 'flex',
           flexDirection: 'column',
         }} >
-          <Container  disableGutters sx={{
-            display: 'flex',
-            flexWrap: 'nowrap',
-            gap: '8px',
-            bgcolor: 'background.paper',
-            minHeight: '50px',
-            justifyContent: "space-between",
-          }}>
-            <Box sx={{ alignContent: "left" }} >
-              <Typography variant='h6'>
-                Actions
-              </Typography>
-              <Container  disableGutters sx={{
-                display: 'flex',
-                flexWrap: 'nowrap',
-                gap: '4px',
-                alignContent: 'left',
-                bgcolor: 'background.paper',
-                minHeight: '50px',
-              }}>
-                  <Button size="small" variant="contained" disabled={!isActive} onClick={() => undo()}> Undo </Button>
-                  <Button size="small" variant="contained" disabled={!isActive} onClick={() => moves.endTurn()}>End Turn</Button>
-                  <Button size="small" variant="contained" disabled={!isActive} onClick={() => onClickSwap()}>Swap</Button>
-              </Container>
-            </Box>
-            <Box >
-              <Typography variant='h6' align="right" >
-                Tiles Remaining
-              </Typography>
-              <Typography variant='body1' align="right" >
-                {G.bagIndex + 1}
-              </Typography>
-            </Box>
-          </Container>
+          <Box sx={{ alignContent: "left" }} >
+            <Typography variant='h6'>
+              Actions
+            </Typography>
+            <Container  disableGutters sx={{
+              display: 'flex',
+              flexWrap: 'nowrap',
+              gap: '8px',
+              alignContent: 'left',
+              bgcolor: 'background.paper',
+              minHeight: '50px',
+            }}>
+                <Button size="small" variant="contained" disabled={!isActive} onClick={() => onClickSwap()}>Swap</Button>
+                <Button size="small" variant="contained" disabled={!isActive} onClick={() => undo()}> Undo </Button>
+                <Button size="small" variant="contained" disabled={!isActive} onClick={() => moves.endTurn()}>End Turn</Button>
+                <Box sx={{display: 'flex', alignItems: 'center', maxWidth: '105px'}} >
+                  <Typography variant='body1' align="left" >
+                    {G.bagIndex + 1} Tiles Remaining
+                  </Typography>
+                </Box>
+            </Container>
+          </Box>
           <TileSet isActive={isActive} tiles={G.players[playerID!].hand} callback={onClickTileCallback} index={handIndex} highlightColor={PLAYER_COLORS[playerID]} name="Your Tiles" />
           <TileSet isActive={isActive} tiles={G.players[playerID!].tilesToSwap} name="Tiles to Swap" />
         </Box>
