@@ -71,6 +71,14 @@ const LobbyComponent : React.FC<LobbyComponentProps> = (props) => {
     handleStartMatch,
   } = props
 
+  const handleExitLobbyWithReset = () => {
+    // Sometimes exiting the lobby fails because a player with the same name is already a part of a match, and this player
+    // lacks the credentials to leave the match. In this case, we allow the player to exit the lobby and select a new name.
+    handleExitLobby().catch(() => {
+      handleEnterLobby('')
+    })
+  }
+
   const renderMatches = (
     matches: LobbyAPI.MatchList['matches'],
     playerName: string
@@ -92,7 +100,7 @@ const LobbyComponent : React.FC<LobbyComponentProps> = (props) => {
 
   return (
     <Container sx={{marginTop: "16px"}} id="lobby-view">
-      {phase === LobbyPhases.ENTER && (
+      {(phase === LobbyPhases.ENTER || playerName === '') && (
         <div>
           <LobbyLoginForm
             key={playerName}
@@ -101,7 +109,7 @@ const LobbyComponent : React.FC<LobbyComponentProps> = (props) => {
           />
         </div>
       )}
-      {phase === LobbyPhases.LIST && (
+      {(phase === LobbyPhases.LIST && playerName !== '') && (
         <Box sx={{display: 'flex', flexDirection: 'column', gap: '32px'}} >
           <Typography variant='h4' >Welcome, {playerName}</Typography>
           <div id="match-creation">
@@ -132,7 +140,7 @@ const LobbyComponent : React.FC<LobbyComponentProps> = (props) => {
             </p>
           </div>
           <div id="lobby-exit">
-            <Button onClick={handleExitLobby}>Exit lobby</Button>
+            <Button onClick={handleExitLobbyWithReset}>Exit lobby</Button>
           </div>
         </Box>
       )}

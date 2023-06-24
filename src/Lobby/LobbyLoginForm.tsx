@@ -53,7 +53,12 @@ class LobbyLoginForm extends React.Component<LoginFormProps, LoginFormState> {
   }
 
   onClickEnter = () => {
-    if (this.state.playerName === '') return;
+    if (this.state.playerName === '') {
+      this.setState({
+        ...this.state,
+        nameErrorMsg: 'Player name cannot be empty.',
+      })
+    }
     this.props.onEnter(this.state.playerName!);
   };
 
@@ -67,7 +72,7 @@ class LobbyLoginForm extends React.Component<LoginFormProps, LoginFormState> {
     const name = event.target.value.trim();
     this.setState({
       playerName: name,
-      nameErrorMsg: name.length > 0 ? '' : 'empty player name',
+      nameErrorMsg: name.length > 0 ? '' : 'Player name cannot be empty.',
     });
   };
 }
