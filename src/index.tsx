@@ -14,6 +14,7 @@ import reportWebVitals from './reportWebVitals';
 import theme from './theme';
 import { Container } from '@mui/material';
 import QwirkleAppBar from './AppBar';
+import QwirkleInstructions from './QwirkleInstructions';
 
 
 const AppWrapper = () => {
@@ -37,6 +38,10 @@ const router = createBrowserRouter([
       {
         path: "/ai",
         element: <AiApp />,
+      },
+      {
+        path: "/how-to-play",
+        element: <QwirkleInstructions />,
       },
     ]
   },

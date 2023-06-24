@@ -13,7 +13,8 @@ import { Link } from '@mui/material';
 
 const pages : { [key: string]: string; } = {
   'Play with others': '/',
-  'Play against a (bad) AI': '/ai'
+  'Play against a (bad) AI': '/ai',
+  'How to play': '/how-to-play'
 };
 
 function QwirkleAppBar() {
