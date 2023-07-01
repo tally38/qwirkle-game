@@ -518,9 +518,6 @@ export const Qwirkle : Game<QwirkleState>= {
           }
         }
         return { winners: winners }
-      } else {
-        // player still has tiles, so game is not over
-        return
       }
     }
   },
