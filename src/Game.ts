@@ -125,6 +125,11 @@ function extendBoardIfNeeded(G: QwirkleState, pos: Position) {
     G.turnPositions.forEach(p => {
       p.i++
     })
+    for (let playerID in G.previousMoves) {
+      G.previousMoves[playerID].forEach(p => {
+        p.i++
+      })
+    }
   }
   if ( pos.i === G.cells.length - 1 ) {
     G.cells.push(Array(G.cells[0].length).fill(null))
