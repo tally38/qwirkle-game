@@ -2,7 +2,9 @@
   "extends": "./tsconfig.json",
   "compilerOptions": {
     "noEmit": false,
-    "outDir": "build/server/"
+    "outDir": "build/server/",
+    "module": "commonjs",
+    "target": "es2020"
   },
   "include": ["src/server.ts"]
 }

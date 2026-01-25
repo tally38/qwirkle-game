@@ -15,6 +15,7 @@ import theme from './theme';
 import { Container } from '@mui/material';
 import QwirkleAppBar from './AppBar';
 import QwirkleInstructions from './QwirkleInstructions';
+import { SettingsProvider } from './SettingsContext';
 
 
 const AppWrapper = () => {
@@ -57,7 +58,9 @@ const root = ReactDOM.createRoot(
 root.render(
   <ThemeProvider theme={theme}>
     <CssBaseline />
-    <RouterProvider router={router} />
+    <SettingsProvider>
+      <RouterProvider router={router} />
+    </SettingsProvider>
   </ThemeProvider>
 );
 

@@ -6,10 +6,12 @@ import IconButton from '@mui/material/IconButton';
 import Typography from '@mui/material/Typography';
 import Menu from '@mui/material/Menu';
 import MenuIcon from '@mui/icons-material/Menu';
+import SettingsIcon from '@mui/icons-material/Settings';
 import Container from '@mui/material/Container';
 import Button from '@mui/material/Button';
 import MenuItem from '@mui/material/MenuItem';
-import { Link } from '@mui/material';
+import { FormControlLabel, Link, Switch } from '@mui/material';
+import { useSettings } from './SettingsContext';
 
 const pages : { [key: string]: string; } = {
   'Play with others': '/',
@@ -19,6 +21,8 @@ const pages : { [key: string]: string; } = {
 
 function QwirkleAppBar() {
   const [anchorElNav, setAnchorElNav] = React.useState<null | HTMLElement>(null);
+  const [anchorElSettings, setAnchorElSettings] = React.useState<null | HTMLElement>(null);
+  const { settings, setSoundEnabled } = useSettings();
 
   const handleOpenNavMenu = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorElNav(event.currentTarget);
@@ -26,6 +30,14 @@ function QwirkleAppBar() {
 
   const handleCloseNavMenu = () => {
     setAnchorElNav(null);
+  };
+
+  const handleOpenSettingsMenu = (event: React.MouseEvent<HTMLElement>) => {
+    setAnchorElSettings(event.currentTarget);
+  };
+
+  const handleCloseSettingsMenu = () => {
+    setAnchorElSettings(null);
   };
 
   return (
@@ -108,6 +120,45 @@ function QwirkleAppBar() {
                 {page}
               </Button>
             ))}
+          </Box>
+          <Box sx={{ flexGrow: 0 }}>
+            <IconButton
+              size="large"
+              aria-label="settings"
+              aria-controls="settings-menu"
+              aria-haspopup="true"
+              onClick={handleOpenSettingsMenu}
+              color="inherit"
+            >
+              <SettingsIcon />
+            </IconButton>
+            <Menu
+              id="settings-menu"
+              anchorEl={anchorElSettings}
+              anchorOrigin={{
+                vertical: 'bottom',
+                horizontal: 'right',
+              }}
+              keepMounted
+              transformOrigin={{
+                vertical: 'top',
+                horizontal: 'right',
+              }}
+              open={Boolean(anchorElSettings)}
+              onClose={handleCloseSettingsMenu}
+            >
+              <MenuItem>
+                <FormControlLabel
+                  control={
+                    <Switch
+                      checked={settings.soundEnabled}
+                      onChange={(e) => setSoundEnabled(e.target.checked)}
+                    />
+                  }
+                  label="Turn notifications"
+                />
+              </MenuItem>
+            </Menu>
           </Box>
         </Toolbar>
       </Container>

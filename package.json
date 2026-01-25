@@ -29,7 +29,7 @@
   },
   "scripts": {
     "build:server": "tsc -p tsconfig.server.json",
-    "start:server": "node -r esm build/server/server.js",
+    "start:server": "node build/server/server.js",
     "build": "react-scripts build && yarn build:server",
     "test": "react-scripts test",
     "eject": "react-scripts eject",

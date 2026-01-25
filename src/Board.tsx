@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { BoardProps } from 'boardgame.io/react';
 import { FilteredMetadata } from 'boardgame.io';
 import { QwirkleState, Tile, Position, TileColor, TileShape } from './Game';
 import { Star, FilterVintage, ChangeHistory, Stop, Lens, Favorite } from '@material-ui/icons';
 import { Avatar, Box, Button, Card, CardContent, CardHeader, Container, Paper, Typography } from '@mui/material';
+import { useSettings } from './SettingsContext';
 
 interface QwirkleProps extends BoardProps<QwirkleState> {}
 
@@ -301,6 +302,29 @@ const BoardCells = ({G, currentPlayer, onClickCell, isActive} : {G: QwirkleState
 export function QwirkleBoard({ ctx, G, moves, undo, playerID, matchData, isActive } : QwirkleProps) {
   const [position, setPosition] = useState<Position | null>(null);
   const [handIndex, setHandIndex] = useState<number | null>(null);
+  const wasActive = useRef(isActive);
+  const { settings } = useSettings();
+
+  // Play notification sound when it becomes the player's turn
+  useEffect(() => {
+    if (isActive && !wasActive.current && settings.soundEnabled) {
+      const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+      const oscillator = audioContext.createOscillator();
+      const gainNode = audioContext.createGain();
+
+      oscillator.connect(gainNode);
+      gainNode.connect(audioContext.destination);
+
+      oscillator.frequency.value = 880; // A5 note
+      oscillator.type = 'sine';
+      gainNode.gain.value = 0.3;
+
+      oscillator.start();
+      gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+      oscillator.stop(audioContext.currentTime + 0.3);
+    }
+    wasActive.current = isActive;
+  }, [isActive, settings.soundEnabled]);
 
   useEffect(() => {
     if (position && handIndex !== null) {
