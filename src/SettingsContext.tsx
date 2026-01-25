@@ -2,20 +2,32 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 
 export type NotificationSound = 'none' | 'chime' | 'bell' | 'melody' | 'fanfare';
 
+export const TILE_SIZE_MIN = 24;
+export const TILE_SIZE_MAX = 56;
+export const TILE_SIZE_DEFAULT = 40;
+
+// Calculate cell size from tile size (adds padding)
+export function getCellSize(tileSize: number): number {
+  return Math.round(tileSize * 1.25);
+}
+
 interface Settings {
   notificationSound: NotificationSound;
   volume: number; // 0 to 1
+  tileSize: number; // pixels, 24-56
 }
 
 interface SettingsContextType {
   settings: Settings;
   setNotificationSound: (sound: NotificationSound) => void;
   setVolume: (volume: number) => void;
+  setTileSize: (size: number) => void;
 }
 
 const defaultSettings: Settings = {
   notificationSound: 'chime',
   volume: 0.7,
+  tileSize: TILE_SIZE_DEFAULT,
 };
 
 const SettingsContext = createContext<SettingsContextType | undefined>(undefined);
@@ -47,8 +59,12 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     setSettings(prev => ({ ...prev, volume: Math.max(0, Math.min(1, volume)) }));
   };
 
+  const setTileSize = (size: number) => {
+    setSettings(prev => ({ ...prev, tileSize: Math.max(TILE_SIZE_MIN, Math.min(TILE_SIZE_MAX, size)) }));
+  };
+
   return (
-    <SettingsContext.Provider value={{ settings, setNotificationSound, setVolume }}>
+    <SettingsContext.Provider value={{ settings, setNotificationSound, setVolume, setTileSize }}>
       {children}
     </SettingsContext.Provider>
   );

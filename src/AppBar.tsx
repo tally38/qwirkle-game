@@ -13,7 +13,9 @@ import MenuItem from '@mui/material/MenuItem';
 import { FormControl, InputLabel, Link, Select, SelectChangeEvent, Slider, Stack } from '@mui/material';
 import VolumeUpIcon from '@mui/icons-material/VolumeUp';
 import VolumeDownIcon from '@mui/icons-material/VolumeDown';
-import { NotificationSound, playNotificationSound, useSettings } from './SettingsContext';
+import { NotificationSound, playNotificationSound, TILE_SIZE_MIN, TILE_SIZE_MAX, useSettings } from './SettingsContext';
+import ZoomOutIcon from '@mui/icons-material/ZoomOut';
+import ZoomInIcon from '@mui/icons-material/ZoomIn';
 
 const pages : { [key: string]: string; } = {
   'Play with others': '/',
@@ -29,10 +31,11 @@ const soundOptions: { value: NotificationSound; label: string }[] = [
   { value: 'fanfare', label: 'Fanfare' },
 ];
 
+
 function QwirkleAppBar() {
   const [anchorElNav, setAnchorElNav] = React.useState<null | HTMLElement>(null);
   const [anchorElSettings, setAnchorElSettings] = React.useState<null | HTMLElement>(null);
-  const { settings, setNotificationSound, setVolume } = useSettings();
+  const { settings, setNotificationSound, setVolume, setTileSize } = useSettings();
 
   const handleOpenNavMenu = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorElNav(event.currentTarget);
@@ -62,6 +65,10 @@ function QwirkleAppBar() {
 
   const handleVolumeCommit = (_event: React.SyntheticEvent | Event, newValue: number | number[]) => {
     playNotificationSound(settings.notificationSound, newValue as number);
+  };
+
+  const handleTileSizeChange = (_event: Event, newValue: number | number[]) => {
+    setTileSize(newValue as number);
   };
 
   return (
@@ -207,6 +214,23 @@ function QwirkleAppBar() {
                     </Stack>
                   </Box>
                 )}
+                <Box sx={{ mt: 2 }}>
+                  <Typography variant="body2" color="text.secondary" gutterBottom>
+                    Tile size
+                  </Typography>
+                  <Stack spacing={2} direction="row" alignItems="center">
+                    <ZoomOutIcon fontSize="small" color="action" />
+                    <Slider
+                      size="small"
+                      value={settings.tileSize}
+                      min={TILE_SIZE_MIN}
+                      max={TILE_SIZE_MAX}
+                      step={2}
+                      onChange={handleTileSizeChange}
+                    />
+                    <ZoomInIcon fontSize="small" color="action" />
+                  </Stack>
+                </Box>
               </Box>
             </Menu>
           </Box>

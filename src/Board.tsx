@@ -4,13 +4,14 @@ import { FilteredMetadata } from 'boardgame.io';
 import { QwirkleState, Tile, Position, TileColor, TileShape } from './Game';
 import { Star, FilterVintage, ChangeHistory, Stop, Lens, Favorite } from '@material-ui/icons';
 import { Avatar, Box, Button, Card, CardContent, CardHeader, Container, Paper, Typography } from '@mui/material';
-import { playNotificationSound, useSettings } from './SettingsContext';
+import { getCellSize, playNotificationSound, useSettings } from './SettingsContext';
 
 interface QwirkleProps extends BoardProps<QwirkleState> {}
 
 interface QwirkleTileProps {
   color: TileColor,
   shape: TileShape,
+  size?: number,
 }
 
 const PLAYER_COLORS : {[key: string]: string} = {
@@ -21,29 +22,29 @@ const PLAYER_COLORS : {[key: string]: string} = {
 }
 
 const QwirkleTile = ( props: QwirkleTileProps) => {
-  const {color, shape} = props
+  const {color, shape, size = 40} = props
 
   const shapes = {
-    'circle': <Lens style={{fontSize: '40px'}}/>,
-    'heart': <Favorite style={{fontSize: '40px'}}/>,
-    'star': <Star style={{fontSize: '40px'}}/>,
-    'square': <Stop style={{fontSize: '40px'}}/>,
-    'diamond': <ChangeHistory style={{fontSize: '40px'}}/>,
-    'flower': <FilterVintage style={{fontSize: '40px'}}/>,
+    'circle': <Lens style={{fontSize: `${size}px`}}/>,
+    'heart': <Favorite style={{fontSize: `${size}px`}}/>,
+    'star': <Star style={{fontSize: `${size}px`}}/>,
+    'square': <Stop style={{fontSize: `${size}px`}}/>,
+    'diamond': <ChangeHistory style={{fontSize: `${size}px`}}/>,
+    'flower': <FilterVintage style={{fontSize: `${size}px`}}/>,
   }
 
   const tileStyles = {
     display: 'inline-block',
-    width: '40px',
-    height: '40px',
+    width: `${size}px`,
+    height: `${size}px`,
     backgroundColor: 'black',
     color: color,
     borderRadius: '5px',
     textAlign: 'center' as 'center',
-    fontSize: '40px',
+    fontSize: `${size}px`,
     fontWeight: 'bold',
     verticalAlign: 'middle',
-    lineHeight: "40px"
+    lineHeight: `${size}px`
   };
 
   return <Box sx={tileStyles}>{shapes[shape]}</Box>;
@@ -170,10 +171,12 @@ interface TileSetProps {
   name: string
   alignRight?: boolean
   highlightColor?: string
+  tileSize?: number
+  cellSize?: number
 }
 
 const TileSet = (props: TileSetProps) => {
-  const { tiles, callback, isActive, index, name, alignRight = false, highlightColor = 'blue' } = props
+  const { tiles, callback, isActive, index, name, alignRight = false, highlightColor = 'blue', tileSize = 40, cellSize = 50 } = props
   var displayTiles = []
   var tile
   for (let i = 0 ; i < tiles.length ; i ++ ) {
@@ -182,16 +185,16 @@ const TileSet = (props: TileSetProps) => {
       displayTiles.push(
         <Box key={i} onClick={(isActive && !!callback) ? callback(i) : () => null} sx={
           {
-            width: '50px',
-            height: '50px',
-            lineHeight: '40px',
+            width: `${cellSize}px`,
+            height: `${cellSize}px`,
+            lineHeight: `${tileSize}px`,
             textAlign: 'center' as 'center',
             borderRadius: '5px',
-            padding: '3px',
+            padding: `${(cellSize - tileSize) / 2}px`,
             backgroundColor: index === i ? highlightColor : 'white',
           }
         }>
-          <QwirkleTile color={tile.color} shape={tile.shape} />
+          <QwirkleTile color={tile.color} shape={tile.shape} size={tileSize} />
         </Box>
       )
     }
@@ -207,7 +210,7 @@ const TileSet = (props: TileSetProps) => {
         gap: '1px',
         justifyContent: alignRight ? 'flex-end' : 'flex-start',
         bgcolor: 'background.paper',
-        minHeight: '50px',
+        minHeight: `${cellSize}px`,
       }}>
         {displayTiles}
       </Container>
@@ -217,16 +220,26 @@ const TileSet = (props: TileSetProps) => {
 
 
 
-const BoardCells = ({G, currentPlayer, onClickCell, isActive} : {G: QwirkleState, currentPlayer: string, onClickCell: (boardPosition: Position) => void, isActive: boolean}) => {
+interface BoardCellsProps {
+  G: QwirkleState;
+  currentPlayer: string;
+  onClickCell: (boardPosition: Position) => void;
+  isActive: boolean;
+  tileSize?: number;
+  cellSize?: number;
+}
+
+const BoardCells = ({G, currentPlayer, onClickCell, isActive, tileSize = 40, cellSize = 50} : BoardCellsProps) => {
+  const padding = (cellSize - tileSize) / 2;
   const cellStyle = {
     border: '1px solid #555',
-    width: '50px',
-    height: '50px',
-    lineHeight: '25px',
+    width: `${cellSize}px`,
+    height: `${cellSize}px`,
+    lineHeight: `${cellSize / 2}px`,
     textAlign: 'center' as 'center',
-    minWidth: '50px',
+    minWidth: `${cellSize}px`,
     borderRadius: '0px',
-    padding: '4px',
+    padding: `${padding}px`,
     margin: '1px',
   };
 
@@ -258,7 +271,7 @@ const BoardCells = ({G, currentPlayer, onClickCell, isActive} : {G: QwirkleState
       cellTile = G.cells[i][j]!
       if (!!cellTile) {
         cellColor = !!positionColors[i] && positionColors[i][j]
-        rowCells.push(<Box key={id} sx={{...cellStyle, background: cellColor}}><QwirkleTile color={cellTile.color} shape={cellTile.shape} /></Box>)
+        rowCells.push(<Box key={id} sx={{...cellStyle, background: cellColor}}><QwirkleTile color={cellTile.color} shape={cellTile.shape} size={tileSize} /></Box>)
       } else {
         rowCells.push(<Button variant='text' key={id} disabled={!isActive} sx={cellStyle} onClick={() => onClickCell({i, j})} />)
       }
@@ -349,7 +362,7 @@ export function QwirkleBoard({ ctx, G, moves, undo, playerID, matchData, isActiv
         gameover={ctx.gameover}
         remainingTiles={G.bagIndex < 0 ? G.remainingTiles: undefined}
       />
-      <BoardCells G={G} currentPlayer={ctx.currentPlayer} onClickCell={onClickCell} isActive={isActive} />
+      <BoardCells G={G} currentPlayer={ctx.currentPlayer} onClickCell={onClickCell} isActive={isActive} tileSize={settings.tileSize} cellSize={getCellSize(settings.tileSize)} />
       { playerID && (
         <Box sx={{
           maxWidth: "sm",
@@ -380,8 +393,8 @@ export function QwirkleBoard({ ctx, G, moves, undo, playerID, matchData, isActiv
                 </Box>
             </Container>
           </Box>
-          <TileSet isActive={isActive} tiles={G.players[playerID!].hand} callback={onClickTileCallback} index={handIndex} highlightColor={PLAYER_COLORS[playerID]} name="Your Tiles" />
-          <TileSet isActive={isActive} tiles={G.players[playerID!].tilesToSwap} name="Tiles to Swap" />
+          <TileSet isActive={isActive} tiles={G.players[playerID!].hand} callback={onClickTileCallback} index={handIndex} highlightColor={PLAYER_COLORS[playerID]} name="Your Tiles" tileSize={settings.tileSize} cellSize={getCellSize(settings.tileSize)} />
+          <TileSet isActive={isActive} tiles={G.players[playerID!].tilesToSwap} name="Tiles to Swap" tileSize={settings.tileSize} cellSize={getCellSize(settings.tileSize)} />
         </Box>
       )}
     </Container>
