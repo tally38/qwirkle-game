@@ -4,7 +4,7 @@ import { FilteredMetadata } from 'boardgame.io';
 import { QwirkleState, Tile, Position, TileColor, TileShape } from './Game';
 import { Star, FilterVintage, ChangeHistory, Stop, Lens, Favorite } from '@material-ui/icons';
 import { Avatar, Box, Button, Card, CardContent, CardHeader, Container, Paper, Typography } from '@mui/material';
-import { useSettings } from './SettingsContext';
+import { playNotificationSound, useSettings } from './SettingsContext';
 
 interface QwirkleProps extends BoardProps<QwirkleState> {}
 
@@ -307,24 +307,11 @@ export function QwirkleBoard({ ctx, G, moves, undo, playerID, matchData, isActiv
 
   // Play notification sound when it becomes the player's turn
   useEffect(() => {
-    if (isActive && !wasActive.current && settings.soundEnabled) {
-      const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
-      const oscillator = audioContext.createOscillator();
-      const gainNode = audioContext.createGain();
-
-      oscillator.connect(gainNode);
-      gainNode.connect(audioContext.destination);
-
-      oscillator.frequency.value = 880; // A5 note
-      oscillator.type = 'sine';
-      gainNode.gain.value = 0.3;
-
-      oscillator.start();
-      gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
-      oscillator.stop(audioContext.currentTime + 0.3);
+    if (isActive && !wasActive.current) {
+      playNotificationSound(settings.notificationSound, settings.volume);
     }
     wasActive.current = isActive;
-  }, [isActive, settings.soundEnabled]);
+  }, [isActive, settings.notificationSound, settings.volume]);
 
   useEffect(() => {
     if (position && handIndex !== null) {
