@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { BoardProps } from 'boardgame.io/react';
 import { FilteredMetadata } from 'boardgame.io';
-import { QwirkleState, Tile, Position, TileColor, TileShape } from './Game';
+import { QwirkleState, Tile, Position, TileColor, TileShape, TurnRecord } from './Game';
 import { Star, FilterVintage, ChangeHistory, Stop, Lens, Favorite } from '@material-ui/icons';
-import { Avatar, Box, Button, Card, CardContent, CardHeader, Container, Paper, Typography } from '@mui/material';
+import { Avatar, Box, Button, Card, CardContent, CardHeader, Container, Divider, Paper, Typography } from '@mui/material';
 import { getCellSize, playNotificationSound, useSettings } from './SettingsContext';
 
 interface QwirkleProps extends BoardProps<QwirkleState> {}
@@ -312,6 +312,119 @@ const BoardCells = ({G, currentPlayer, onClickCell, isActive, tileSize = 40, cel
 }
 
 
+function formatDuration(ms: number): string {
+  const totalSeconds = Math.floor(ms / 1000);
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  if (minutes > 0) {
+    return `${minutes}m ${seconds}s`;
+  }
+  return `${seconds}s`;
+}
+
+const TurnTimer = ({ turnStartTime, isGameOver }: { turnStartTime: number; isGameOver: boolean }) => {
+  const [elapsed, setElapsed] = useState(0);
+
+  useEffect(() => {
+    if (isGameOver) return;
+    const interval = setInterval(() => {
+      setElapsed(Date.now() - turnStartTime);
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [turnStartTime, isGameOver]);
+
+  if (isGameOver) return null;
+
+  return (
+    <Box sx={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+      <Typography variant="body2" color="text.secondary">
+        Turn time: <strong>{formatDuration(elapsed)}</strong>
+      </Typography>
+    </Box>
+  );
+};
+
+interface GameStatsProps {
+  turnHistory: TurnRecord[];
+  matchData?: FilteredMetadata;
+  scores: { [key: string]: number };
+}
+
+const GameStats = ({ turnHistory, matchData, scores }: GameStatsProps) => {
+  if (!turnHistory.length) return null;
+
+  const playerIDs = [...new Set(turnHistory.map(t => t.playerID))];
+
+  const playerStats = playerIDs.map(pid => {
+    const turns = turnHistory.filter(t => t.playerID === pid);
+    const totalTime = turns.reduce((sum, t) => sum + t.duration, 0);
+    const avgTime = totalTime / turns.length;
+    const longestTurn = turns.reduce((max, t) => t.duration > max.duration ? t : max, turns[0]);
+    const shortestTurn = turns.reduce((min, t) => t.duration < min.duration ? t : min, turns[0]);
+    const bestTurn = turns.reduce((max, t) => t.scoreEarned > max.scoreEarned ? t : max, turns[0]);
+    const totalTilesPlaced = turns.reduce((sum, t) => sum + t.tilesPlaced, 0);
+
+    return {
+      playerID: pid,
+      playerName: findPlayerName(matchData, pid),
+      totalTurns: turns.length,
+      totalTime,
+      avgTime,
+      longestTurn,
+      shortestTurn,
+      bestTurn,
+      totalTilesPlaced,
+      score: scores[pid],
+    };
+  });
+
+  const overallLongest = turnHistory.reduce((max, t) => t.duration > max.duration ? t : max, turnHistory[0]);
+  const overallShortest = turnHistory.reduce((min, t) => t.duration < min.duration ? t : min, turnHistory[0]);
+  const overallBestTurn = turnHistory.reduce((max, t) => t.scoreEarned > max.scoreEarned ? t : max, turnHistory[0]);
+
+  return (
+    <Paper elevation={3} sx={{ padding: '16px', marginTop: '16px', maxWidth: '600px' }}>
+      <Typography variant="h6" gutterBottom>
+        Game Stats
+      </Typography>
+
+      <Box sx={{ marginBottom: '12px' }}>
+        <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+          Highlights
+        </Typography>
+        <Typography variant="body2">
+          Longest turn: <strong>{formatDuration(overallLongest.duration)}</strong> by {findPlayerName(matchData, overallLongest.playerID)} (turn {overallLongest.turnNumber})
+        </Typography>
+        <Typography variant="body2">
+          Shortest turn: <strong>{formatDuration(overallShortest.duration)}</strong> by {findPlayerName(matchData, overallShortest.playerID)} (turn {overallShortest.turnNumber})
+        </Typography>
+        <Typography variant="body2">
+          Best turn: <strong>{overallBestTurn.scoreEarned} pts</strong> by {findPlayerName(matchData, overallBestTurn.playerID)} ({overallBestTurn.tilesPlaced} tiles, turn {overallBestTurn.turnNumber})
+        </Typography>
+      </Box>
+
+      <Divider sx={{ marginBottom: '12px' }} />
+
+      {playerStats.map(ps => (
+        <Box key={ps.playerID} sx={{ marginBottom: '12px' }}>
+          <Typography variant="subtitle2" sx={{ color: PLAYER_COLORS[ps.playerID] }}>
+            {ps.playerName} — {ps.score} pts
+          </Typography>
+          <Box sx={{ paddingLeft: '8px' }}>
+            <Typography variant="body2">Turns: {ps.totalTurns}</Typography>
+            <Typography variant="body2">Total time: {formatDuration(ps.totalTime)}</Typography>
+            <Typography variant="body2">Avg turn time: {formatDuration(ps.avgTime)}</Typography>
+            <Typography variant="body2">Longest turn: {formatDuration(ps.longestTurn.duration)}</Typography>
+            <Typography variant="body2">Shortest turn: {formatDuration(ps.shortestTurn.duration)}</Typography>
+            <Typography variant="body2">Best turn: {ps.bestTurn.scoreEarned} pts ({ps.bestTurn.tilesPlaced} tiles)</Typography>
+            <Typography variant="body2">Total tiles placed: {ps.totalTilesPlaced}</Typography>
+          </Box>
+        </Box>
+      ))}
+    </Paper>
+  );
+};
+
 export function QwirkleBoard({ ctx, G, moves, undo, playerID, matchData, isActive } : QwirkleProps) {
   const [position, setPosition] = useState<Position | null>(null);
   const [handIndex, setHandIndex] = useState<number | null>(null);
@@ -362,6 +475,10 @@ export function QwirkleBoard({ ctx, G, moves, undo, playerID, matchData, isActiv
         gameover={ctx.gameover}
         remainingTiles={G.bagIndex < 0 ? G.remainingTiles: undefined}
       />
+      <TurnTimer turnStartTime={G.turnStartTime} isGameOver={!!ctx.gameover} />
+      {ctx.gameover && (
+        <GameStats turnHistory={G.turnHistory} matchData={matchData} scores={G.scores} />
+      )}
       <BoardCells G={G} currentPlayer={ctx.currentPlayer} onClickCell={onClickCell} isActive={isActive} tileSize={settings.tileSize} cellSize={getCellSize(settings.tileSize)} />
       { playerID && (
         <Box sx={{

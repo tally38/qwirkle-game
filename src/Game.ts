@@ -35,6 +35,15 @@ export interface Position {
   j: number
 }
 
+export interface TurnRecord {
+  playerID: string,
+  duration: number, // in milliseconds
+  scoreEarned: number,
+  tilesPlaced: number,
+  turnNumber: number,
+}
+
+
 export interface QwirkleState {
   cells: (null | Tile)[][];
   secret: {
@@ -57,6 +66,8 @@ export interface QwirkleState {
   remainingTiles: {
     [key: string]: number
   },
+  turnStartTime: number, // timestamp when current turn started
+  turnHistory: TurnRecord[],
 }
 
 function shuffle(array: any[], lastIndex: number) {
@@ -444,7 +455,7 @@ export const Qwirkle : Game<QwirkleState>= {
     var initialBoardSize = 5
     var cells = Array(initialBoardSize).fill(Array(initialBoardSize).fill(null))
 
-    var G : QwirkleState = {secret: {bag}, bagIndex, players, cells, scores, turnPositions: [], previousScores, previousMoves, remainingTiles}
+    var G : QwirkleState = {secret: {bag}, bagIndex, players, cells, scores, turnPositions: [], previousScores, previousMoves, remainingTiles, turnStartTime: Date.now(), turnHistory: []}
     fillAllHands(G)
     return G
   },
@@ -492,11 +503,22 @@ export const Qwirkle : Game<QwirkleState>= {
         if (G.players[playerID].tilesToSwap.length && G.turnPositions.length) {
           throw new Error("Player swapped and placed tiles within same turn.")
         }
+        const tilesPlacedThisTurn = G.turnPositions.length
+        const scoreBeforeTurn = G.scores[playerID]
         updateScore(G, playerID)
         swapSelectedTiles(G, playerID)
         if (G.players[playerID].hand.every((val) => val === null)) {
           G.scores[playerID] += 6
         }
+        const scoreEarned = G.scores[playerID] - scoreBeforeTurn
+        const turnDuration = Date.now() - G.turnStartTime
+        G.turnHistory.push({
+          playerID,
+          duration: turnDuration,
+          scoreEarned,
+          tilesPlaced: tilesPlacedThisTurn,
+          turnNumber: ctx.turn,
+        })
         G.previousMoves[playerID] = [...G.turnPositions]
         G.turnPositions = []
         fillHand(G, playerID)
@@ -534,6 +556,7 @@ export const Qwirkle : Game<QwirkleState>= {
     },
     onBegin: ({ G }) => {
       G.previousScores = {...G.scores}
+      G.turnStartTime = Date.now()
     }
   },
   ai: {
