@@ -312,6 +312,61 @@ const BoardCells = ({G, currentPlayer, onClickCell, isActive, tileSize = 40, cel
 }
 
 
+const QwirkleBanner = ({ playerName, color }: { playerName: string; color: string }) => {
+  const [visible, setVisible] = useState(true);
+
+  useEffect(() => {
+    const timeout = setTimeout(() => setVisible(false), 4000);
+    return () => clearTimeout(timeout);
+  }, []);
+
+  if (!visible) return null;
+
+  return (
+    <Box
+      sx={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        zIndex: 9999,
+        display: 'flex',
+        justifyContent: 'center',
+        pointerEvents: 'none',
+        animation: 'qwirkle-slide-in 0.4s ease-out',
+        '@keyframes qwirkle-slide-in': {
+          '0%': { transform: 'translateY(-100%)' },
+          '100%': { transform: 'translateY(0)' },
+        },
+      }}
+    >
+      <Paper
+        elevation={8}
+        sx={{
+          background: `linear-gradient(135deg, ${color}, #222)`,
+          color: 'white',
+          padding: '16px 48px',
+          margin: '16px',
+          borderRadius: '12px',
+          textAlign: 'center',
+          animation: 'qwirkle-pulse 0.6s ease-in-out 3',
+          '@keyframes qwirkle-pulse': {
+            '0%, 100%': { transform: 'scale(1)' },
+            '50%': { transform: 'scale(1.05)' },
+          },
+        }}
+      >
+        <Typography variant="h3" sx={{ fontWeight: 'bold', letterSpacing: '4px' }}>
+          QWIRKLE!
+        </Typography>
+        <Typography variant="h6">
+          {playerName} completed a line of 6!
+        </Typography>
+      </Paper>
+    </Box>
+  );
+};
+
 function formatDuration(ms: number): string {
   const totalSeconds = Math.floor(ms / 1000);
   const minutes = Math.floor(totalSeconds / 60);
@@ -430,6 +485,16 @@ export function QwirkleBoard({ ctx, G, moves, undo, playerID, matchData, isActiv
   const [handIndex, setHandIndex] = useState<number | null>(null);
   const wasActive = useRef(isActive);
   const { settings } = useSettings();
+  const [qwirkleBannerKey, setQwirkleBannerKey] = useState<number | null>(null);
+  const lastSeenQwirkle = useRef<number | null>(null);
+
+  // Show Qwirkle banner when a new Qwirkle is scored
+  useEffect(() => {
+    if (G.lastQwirkle && G.lastQwirkle.turnNumber !== lastSeenQwirkle.current) {
+      lastSeenQwirkle.current = G.lastQwirkle.turnNumber;
+      setQwirkleBannerKey(Date.now());
+    }
+  }, [G.lastQwirkle]);
 
   // Play notification sound when it becomes the player's turn
   useEffect(() => {
@@ -467,6 +532,13 @@ export function QwirkleBoard({ ctx, G, moves, undo, playerID, matchData, isActiv
 
   return (
     <Container disableGutters sx={{minWidth: "300px", margin: "16px 0px" }} >
+      {qwirkleBannerKey && G.lastQwirkle && (
+        <QwirkleBanner
+          key={qwirkleBannerKey}
+          playerName={findPlayerName(matchData, G.lastQwirkle.playerID)}
+          color={PLAYER_COLORS[G.lastQwirkle.playerID]}
+        />
+      )}
       <PlayersDisplay
         scores={G.scores}
         matchData={matchData}

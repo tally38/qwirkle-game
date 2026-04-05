@@ -68,6 +68,7 @@ export interface QwirkleState {
   },
   turnStartTime: number, // timestamp when current turn started
   turnHistory: TurnRecord[],
+  lastQwirkle: { playerID: string; turnNumber: number } | null,
 }
 
 function shuffle(array: any[], lastIndex: number) {
@@ -365,9 +366,10 @@ function validTilePlacement(ctx: Ctx, G: QwirkleState, playerID: string, pos: Po
   return true
 }
 
-function updateScore(G: QwirkleState, playerID: string) {
+function updateScore(G: QwirkleState, ctx: Ctx, playerID: string) {
   var turnScore = 0
   var pointArray : number[] = []
+  var gotQwirkle = false
   var tilesInRow = G.turnPositions.every( (val, _, arr) => val.i === arr[0].i )
   if ( G.turnPositions.length === 0 ) {
     return
@@ -389,11 +391,15 @@ function updateScore(G: QwirkleState, playerID: string) {
   pointArray.forEach(p => {
     if (p === 6) {
       turnScore += 12
+      gotQwirkle = true
     } else if ( p > 1 ) {
       turnScore += p
     }
   })
   G.scores[playerID] += turnScore
+  if (gotQwirkle) {
+    G.lastQwirkle = { playerID, turnNumber: ctx.turn }
+  }
 }
 
 function swapSelectedTiles(G: QwirkleState, playerID: string) {
@@ -455,7 +461,7 @@ export const Qwirkle : Game<QwirkleState>= {
     var initialBoardSize = 5
     var cells = Array(initialBoardSize).fill(Array(initialBoardSize).fill(null))
 
-    var G : QwirkleState = {secret: {bag}, bagIndex, players, cells, scores, turnPositions: [], previousScores, previousMoves, remainingTiles, turnStartTime: Date.now(), turnHistory: []}
+    var G : QwirkleState = {secret: {bag}, bagIndex, players, cells, scores, turnPositions: [], previousScores, previousMoves, remainingTiles, turnStartTime: Date.now(), turnHistory: [], lastQwirkle: null}
     fillAllHands(G)
     return G
   },
@@ -505,7 +511,7 @@ export const Qwirkle : Game<QwirkleState>= {
         }
         const tilesPlacedThisTurn = G.turnPositions.length
         const scoreBeforeTurn = G.scores[playerID]
-        updateScore(G, playerID)
+        updateScore(G, ctx, playerID)
         swapSelectedTiles(G, playerID)
         if (G.players[playerID].hand.every((val) => val === null)) {
           G.scores[playerID] += 6
